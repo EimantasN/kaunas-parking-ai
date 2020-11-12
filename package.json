@@ -10,10 +10,15 @@
     "@types/node": "^14.14.7",
     "@types/react": "^16.9.56",
     "@types/react-dom": "^16.9.9",
+    "antd": "^4.8.2",
+    "hls.js": "^0.15.0-alpha.2.0.canary.6087",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "react-player": "^2.6.2",
     "react-scripts": "4.0.0",
     "typescript": "^4.0.5",
+    "video-react": "^0.14.1",
+    "vscode-react-typescript": "^1.0.8",
     "web-vitals": "^0.2.4"
   },
   "scripts": {
