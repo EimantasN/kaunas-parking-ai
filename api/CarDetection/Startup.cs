@@ -24,8 +24,8 @@ namespace CarDetection
             {
                 builder
                 .WithOrigins(
-                    "https://p170m109.endev.lt/",
-                    "http://p170m109.endev.lt/",
+                    "https://p170m109.endev.lt",
+                    "http://p170m109.endev.lt",
                     "http://localhost:3000")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
