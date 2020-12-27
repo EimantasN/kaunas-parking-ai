@@ -1,12 +1,14 @@
 import * as React from 'react';
-import { DetectionClient, MRCnnClient } from './Api/api';
+import { DetectionClient, MRCnnClient, MRCnnResponse } from './Api/api';
 import Stats from './Stats';
 import { Radio } from 'antd';
+import RectsOnImage from './Draw/RectsOnImage';
 
 export interface IMaskRCNNModelProps {
 }
 
 export interface IMaskRCNNModelState {
+    model?: MRCnnResponse,
     count: number,
     free: number,
     currentSource: number,
@@ -43,6 +45,7 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
 
   public onChange = (e: any) => {
     this.setState({currentSource: e.target.value});
+    this.update();
   };
 
   private getOptions(): typeof Radio[] {
@@ -59,7 +62,6 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
     this.setState({timer: setInterval(async () => {
         this.update();
     }, this.refresh * 1000)});
-
   }
 
   public render() {
@@ -80,13 +82,18 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
         <br></br>
         <div className="playerContainer">
           <div className="player">
-            <img style={{
+            <RectsOnImage 
+              model={this.state.model}
+              scale={0.5}
+              url={this.state.getBaseUrl()}
+            />
+            {/* <img style={{
                 minHeight: '330px',
                 maxHeight: '500px',
               }} 
               placeholder="https://img.icons8.com/ios/452/no-image.png"
               alt="rcnn detection img" 
-              src={this.state.getBaseUrl()}></img>
+              src={this.state.getBaseUrl()}></img> */}
           </div>
         </div>
         <p>{this.state.unixTime}</p>
@@ -97,6 +104,7 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
   public async update() {
     const response = await this.Client.predict();
     this.setState({
+        model: response,
         unixTime: `${Math.round(Date.now() / 1000)}`,
         lastUpdate: new Date(),
         count: response.total ?? 0,

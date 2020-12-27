@@ -104,11 +104,11 @@ class Img extends Component {
 	getDims = (space, parent, child) => {
 		switch (space) {
 			case "fill":
-				return this.fillRect(parent, child); break;
+				return this.fillRect(parent, child);
 
 			case "fit":
 			default:
-				return this.fitRect(parent, child); break;
+				return this.fitRect(parent, child);
 		}
 	};
 

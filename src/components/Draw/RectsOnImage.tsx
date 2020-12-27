@@ -45,70 +45,42 @@ class ColoredRect extends React.Component<IColoredRectProps, IColoredRectState> 
   }
 }
 
-const scale: number = 0.5;
+interface IRectsOnImageProps {
+  model?: MRCnnResponse,
+  url: string,
+  scale: number
+}
 
-class RectsOnImage extends Component {
-
-  public Client: MRCnnClient = new MRCnnClient();
-  
-  state = {
-    width: (1920 * scale),
-    height: (1080 * scale),
-    rects: []
-  }
-
-  async componentDidMount() {
-    var predict = await this.Client.predict();
-console.log(((predict.width ?? 0) / scale))
-    this.setState({
-      width: ((predict.width ?? 0) * scale), 
-      height: (predict.height ?? 0) * scale,
-      rects: this.getRects(predict)
-    });
-  }
-
-  componentDidUpdate() {
-    console.log(this.state);
-  }
+export default class RectsOnImage extends Component<IRectsOnImageProps> {
 
   public getRects(response: MRCnnResponse | undefined): any[] {
     const rects: any[] = [];
-    if (response) {
-      response.rects?.forEach((el) => {
-        rects.push(<ColoredRect 
-          x={(el.x ?? 0) * scale}
-          y={(el.y ?? 0) * scale}
-          width={(el.width ?? 0) * scale}
-          height={(el.height ?? 0) * scale}
-        />);
-      });
-    }
+    response?.rects?.forEach((el) => {
+      rects.push(<ColoredRect 
+        x={(el.x ?? 0) * this.props.scale}
+        y={(el.y ?? 0) * this.props.scale}
+        width={(el.width ?? 0) * this.props.scale}
+        height={(el.height ?? 0) * this.props.scale}
+      />);
+    });
+    console.log('rects');
     return rects;
   }
 
   render() {
-    // Stage is a div container
-    // Layer is actual canvas element (so you may have several canvases in the stage)
-    // And then we have canvas shapes inside the Layer
+    const width = ((this.props.model?.width ?? 0) * this.props.scale);
+    const height = ((this.props.model?.height ?? 0) * this.props.scale);
     return (
-      <Stage width={window.innerWidth} height={window.innerHeight}>
-        <Layer width={this.state.width} height={this.state.height}>
+      <Stage width={width} height={height}>
+        <Layer width={width} height={height}>
           <Img 
-            src={'http://118.220.7.47:8000/webcapture.jpg?command=snap&channel=1?1609097577'} 
-            width={this.state.width} 
-            height={this.state.height} 
+            src={this.props.url} 
+            width={width} 
+            height={height} 
             space="fill"/>
-          {/* <ColoredRect 
-            x={0}
-            y={0}
-            width={this.state.width}
-            height={this.state.height}
-          /> */}
-          {this.state.rects}
+          {this.getRects(this.props.model)}
         </Layer>
       </Stage>
     );
   }
 }
-
-export default RectsOnImage;
