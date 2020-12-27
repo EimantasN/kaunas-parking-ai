@@ -1,16 +1,16 @@
 import * as React from 'react';
 import { Row, Col } from 'antd';
 
-export interface IAppProps {
+export interface IStatsProps {
     count: number,
     free: number,
     lastUpdate: Date
 }
 
-export interface IAppState {
+export interface IStatsState {
 }
 
-export default class Stats extends React.Component<IAppProps, IAppState> {
+export default class Stats extends React.Component<IStatsProps, IStatsState> {
     render() {
         return (
             <div>

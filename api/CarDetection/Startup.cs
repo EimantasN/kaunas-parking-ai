@@ -1,4 +1,6 @@
+using CarDetection.HostedServices;
 using CarDetection.Interfaces;
+using CarDetection.MLModels;
 using CarDetection.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -20,13 +22,16 @@ namespace CarDetection
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHttpClient();
+
             services.AddCors(o => o.AddPolicy("React", builder =>
             {
                 builder
                 .WithOrigins(
                     "https://p170m109.endev.lt",
                     "http://p170m109.endev.lt",
-                    "http://localhost:3000")
+                    "http://localhost:3000",
+                    "http://192.168.0.108:3000")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials();
@@ -41,6 +46,13 @@ namespace CarDetection
             });
 
             services.AddSingleton<IDetection, DetectionService>();
+            services.AddSingleton<IModelService, ModelService>();
+
+            // Register Ml Models
+            services.AddSingleton<IMRCnnModel, MRCnnModel>();
+
+            // Model wathcer
+            services.AddHostedService<MRCnnHostedService>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

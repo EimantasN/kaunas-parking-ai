@@ -1,4 +1,4 @@
-import React, { Component, useEffect, useState  } from 'react';
+import React from 'react';
 import { Upload, Modal } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 

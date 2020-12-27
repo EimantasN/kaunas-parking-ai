@@ -14,7 +14,7 @@ export class DetectionClient {
 
     constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
         this.http = http ? http : <any>window;
-        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "https://detection.endev.lt";
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
     }
 
     detect(): Promise<AnalyzeObject> {
@@ -49,6 +49,100 @@ export class DetectionClient {
             });
         }
         return Promise.resolve<AnalyzeObject>(<any>null);
+    }
+}
+
+export class ModelsClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : <any>window;
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
+    }
+
+    all(): Promise<MlModel[]> {
+        let url_ = this.baseUrl + "/All";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAll(_response);
+        });
+    }
+
+    protected processAll(response: Response): Promise<MlModel[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(MlModel.fromJS(item));
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MlModel[]>(<any>null);
+    }
+}
+
+export class MRCnnClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : <any>window;
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
+    }
+
+    predict(): Promise<MRCnnResponse> {
+        let url_ = this.baseUrl + "/Predict";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processPredict(_response);
+        });
+    }
+
+    protected processPredict(response: Response): Promise<MRCnnResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MRCnnResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MRCnnResponse>(<any>null);
     }
 }
 
@@ -176,6 +270,209 @@ export enum CarTypes {
     PickupTruck = 8,
     Trunk = 9,
     Unidentified = 10,
+}
+
+export class Entity implements IEntity {
+    id?: number;
+
+    constructor(data?: IEntity) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+        }
+    }
+
+    static fromJS(data: any): Entity {
+        data = typeof data === 'object' ? data : {};
+        let result = new Entity();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        return data; 
+    }
+}
+
+export interface IEntity {
+    id?: number;
+}
+
+export class TrackedEntity extends Entity implements ITrackedEntity {
+    created?: Date;
+    updated?: Date;
+
+    constructor(data?: ITrackedEntity) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.created = _data["created"] ? new Date(_data["created"].toString()) : <any>undefined;
+            this.updated = _data["updated"] ? new Date(_data["updated"].toString()) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): TrackedEntity {
+        data = typeof data === 'object' ? data : {};
+        let result = new TrackedEntity();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["created"] = this.created ? this.created.toISOString() : <any>undefined;
+        data["updated"] = this.updated ? this.updated.toISOString() : <any>undefined;
+        super.toJSON(data);
+        return data; 
+    }
+}
+
+export interface ITrackedEntity extends IEntity {
+    created?: Date;
+    updated?: Date;
+}
+
+export class MlModel extends TrackedEntity implements IMlModel {
+    path?: string | undefined;
+    name?: string | undefined;
+    stream?: StreamSource | undefined;
+
+    constructor(data?: IMlModel) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.path = _data["path"];
+            this.name = _data["name"];
+            this.stream = _data["stream"] ? StreamSource.fromJS(_data["stream"]) : <any>undefined;
+        }
+    }
+
+    static fromJS(data: any): MlModel {
+        data = typeof data === 'object' ? data : {};
+        let result = new MlModel();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["path"] = this.path;
+        data["name"] = this.name;
+        data["stream"] = this.stream ? this.stream.toJSON() : <any>undefined;
+        super.toJSON(data);
+        return data; 
+    }
+}
+
+export interface IMlModel extends ITrackedEntity {
+    path?: string | undefined;
+    name?: string | undefined;
+    stream?: StreamSource | undefined;
+}
+
+export class StreamSource extends Entity implements IStreamSource {
+    url?: string | undefined;
+    miliseconds?: number;
+    current?: number;
+    increment?: number;
+    refresh?: boolean;
+
+    constructor(data?: IStreamSource) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.url = _data["url"];
+            this.miliseconds = _data["miliseconds"];
+            this.current = _data["current"];
+            this.increment = _data["increment"];
+            this.refresh = _data["refresh"];
+        }
+    }
+
+    static fromJS(data: any): StreamSource {
+        data = typeof data === 'object' ? data : {};
+        let result = new StreamSource();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["url"] = this.url;
+        data["miliseconds"] = this.miliseconds;
+        data["current"] = this.current;
+        data["increment"] = this.increment;
+        data["refresh"] = this.refresh;
+        super.toJSON(data);
+        return data; 
+    }
+}
+
+export interface IStreamSource extends IEntity {
+    url?: string | undefined;
+    miliseconds?: number;
+    current?: number;
+    increment?: number;
+    refresh?: boolean;
+}
+
+export class MRCnnResponse implements IMRCnnResponse {
+    total?: number;
+    free?: number;
+
+    constructor(data?: IMRCnnResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.total = _data["total"];
+            this.free = _data["free"];
+        }
+    }
+
+    static fromJS(data: any): MRCnnResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new MRCnnResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["total"] = this.total;
+        data["free"] = this.free;
+        return data; 
+    }
+}
+
+export interface IMRCnnResponse {
+    total?: number;
+    free?: number;
 }
 
 export class ApiException extends Error {

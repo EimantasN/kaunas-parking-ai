@@ -1,19 +1,19 @@
 import * as React from 'react';
 import { Collapse } from 'antd';
-import { Table, Tag, Space } from 'antd';
+import { Table } from 'antd';
 import { IMatch } from './Api/api';
 import { ColumnsType } from 'antd/lib/table/interface';
 
-export interface IAppProps {
+export interface ITableContainerProps {
     Matches: IMatch[]
 }
 
-export interface IAppState {
+export interface ITableContainerState {
 }
 
 const { Panel } = Collapse;
 
-export default class TableContainer extends React.Component<IAppProps, IAppState> {
+export default class TableContainer extends React.Component<ITableContainerProps, ITableContainerState> {
   public render() {
     return (
       <div>
