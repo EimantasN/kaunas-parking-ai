@@ -52,7 +52,7 @@ namespace CarDetection.MLModels
                 var content = await response.Content.ReadAsStringAsync();
 
                 var model = JsonConvert.DeserializeObject<ModelResponse>(content);
-                var carDetections = model.data
+                var carDetections = model.Data
                     .Where(x => x[1] == "car")
                     .ToList();
 
@@ -68,6 +68,10 @@ namespace CarDetection.MLModels
 
                 LastPrediction.Free = MaxCount - CurrentCount;
                 LastPrediction.Total = MaxCount;
+
+                LastPrediction.Width = model.Width;
+                LastPrediction.Height = model.Height;
+                LastPrediction.ParseRects(model.Rects);
             }
             finally
             {
@@ -86,11 +90,62 @@ namespace CarDetection.MLModels
         public int Total { get; set; }
 
         public int Free { get; set; }
+
+        public int Width { get; set; }
+
+        public int Height { get; set; }
+
+        public List<DrawRects> Rects { get; set; } = new List<DrawRects>();
+
+        public void ParseRects(List<List<string>> data)
+        {
+            Rects.Clear();
+            foreach (var rect in data)
+            {
+                Rects.Add(new DrawRects(rect));
+            }
+        }
     }
 
     public class ModelResponse
     {
-        public List<List<string>>? data { get; set; }
-        public string? url { get; set; }
+        [JsonProperty("data")]
+        public List<List<string>> Data { get; set; } = new List<List<string>>();
+        [JsonProperty("rects")]
+        public List<List<string>> Rects { get; set; } = new List<List<string>>();
+        [JsonProperty("url")]
+        public string Url { get; set; } = string.Empty;
+        [JsonProperty("height")]
+        public int Height { get; set; }
+        [JsonProperty("width")]
+        public int Width { get; set; }
+    }
+
+    public class DrawRects
+    {
+        public int x { get; set; }
+
+        public int y { get; set; }
+
+        public int width { get; set; }
+
+        public int height { get; set; }
+
+        public DrawRects(List<string> data)
+        {
+            var parsed = data.Select(x => int.Parse(x))
+                .ToList();
+
+            var y1 = parsed[0];
+            var x1 = parsed[1];
+            var y2 = parsed[2];
+            var x2 = parsed[3];
+
+            x = x1;
+            y = y1;
+
+            width = x2 - x1;
+            height = y2 - y1;
+        }
     }
 }

@@ -58,7 +58,8 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
     this.update();
     this.setState({timer: setInterval(async () => {
         this.update();
-    }, this.refresh * 1000)})
+    }, this.refresh * 1000)});
+
   }
 
   public render() {

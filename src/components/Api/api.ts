@@ -438,6 +438,9 @@ export interface IStreamSource extends IEntity {
 export class MRCnnResponse implements IMRCnnResponse {
     total?: number;
     free?: number;
+    width?: number;
+    height?: number;
+    rects?: DrawRects[];
 
     constructor(data?: IMRCnnResponse) {
         if (data) {
@@ -452,6 +455,13 @@ export class MRCnnResponse implements IMRCnnResponse {
         if (_data) {
             this.total = _data["total"];
             this.free = _data["free"];
+            this.width = _data["width"];
+            this.height = _data["height"];
+            if (Array.isArray(_data["rects"])) {
+                this.rects = [] as any;
+                for (let item of _data["rects"])
+                    this.rects!.push(DrawRects.fromJS(item));
+            }
         }
     }
 
@@ -466,6 +476,13 @@ export class MRCnnResponse implements IMRCnnResponse {
         data = typeof data === 'object' ? data : {};
         data["total"] = this.total;
         data["free"] = this.free;
+        data["width"] = this.width;
+        data["height"] = this.height;
+        if (Array.isArray(this.rects)) {
+            data["rects"] = [];
+            for (let item of this.rects)
+                data["rects"].push(item.toJSON());
+        }
         return data; 
     }
 }
@@ -473,6 +490,57 @@ export class MRCnnResponse implements IMRCnnResponse {
 export interface IMRCnnResponse {
     total?: number;
     free?: number;
+    width?: number;
+    height?: number;
+    rects?: DrawRects[];
+}
+
+export class DrawRects implements IDrawRects {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
+
+    constructor(data?: IDrawRects) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.x = _data["x"];
+            this.y = _data["y"];
+            this.width = _data["width"];
+            this.height = _data["height"];
+        }
+    }
+
+    static fromJS(data: any): DrawRects {
+        data = typeof data === 'object' ? data : {};
+        let result = new DrawRects();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["x"] = this.x;
+        data["y"] = this.y;
+        data["width"] = this.width;
+        data["height"] = this.height;
+        return data; 
+    }
+}
+
+export interface IDrawRects {
+    x?: number;
+    y?: number;
+    width?: number;
+    height?: number;
 }
 
 export class ApiException extends Error {
