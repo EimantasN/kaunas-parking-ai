@@ -14,7 +14,7 @@ export class DetectionClient {
 
     constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
         this.http = http ? http : <any>window;
-        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "https://detection.endev.lt";
     }
 
     detect(): Promise<AnalyzeObject> {
@@ -59,7 +59,7 @@ export class ModelsClient {
 
     constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
         this.http = http ? http : <any>window;
-        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "https://detection.endev.lt";
     }
 
     all(): Promise<MlModel[]> {
@@ -108,7 +108,7 @@ export class MRCnnClient {
 
     constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
         this.http = http ? http : <any>window;
-        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "https://detection.endev.lt";
     }
 
     predict(): Promise<MRCnnResponse> {
