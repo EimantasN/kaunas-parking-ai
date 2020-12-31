@@ -13,7 +13,6 @@ brokenImage.onload = function() {
 	this.brokenImage = true;
 };
 
-
 class Img extends Component {
 
 	constructor(...args) {
@@ -33,7 +32,6 @@ class Img extends Component {
 		var img = imgCache[src];
 
 		if (!img) {
-			console.log("cacheImg...");
 			img = imgCache[src] = document.createElement("img");
 			img.loadFns = [];
 			img.errorFns = [];
@@ -61,17 +59,14 @@ class Img extends Component {
 		}
 
 		if (!img.loaded && !img.error) {
-			console.log("set handlers");
 			img.loadFns.push(() => {
 				img.loaded = true;
 				this.setState({loaded: true, image: img});
-				console.log("Image loaded", src);
 			});
 
 			img.errorFns.push(() => {
 				img.error = true;
 				this.setState({error: true, image: brokenImage});
-				console.log('Error loading image', src, this.state);
 			});
 
 		} else if (img.error) {
@@ -79,14 +74,11 @@ class Img extends Component {
 			console.log('Error previously loading image', src);
 		} else {
 			this.setState({loaded: true, image: img});
-			console.log("Image pre-loaded", src);
 		}
 
 		if (!img.src) {
-			console.log("set img src to", src);
 			img.src = src;
 		}
-
 	}
 
 	fillRect = (p, c) => {
@@ -117,15 +109,26 @@ class Img extends Component {
 	};
 
 	render = () => {
-		console.log("render", this.props);
-		var selfDims = {width: this.props.width, height: this.props.height},
+		var selfDims = {
+				width: this.props.width, 
+				height: this.props.height
+			},
 			image = this.state.image,
-			imageDims = image ? {width: image.width, height: image.height} : selfDims,
+			imageDims = image ? {
+				width: image.width, 
+				height: image.height
+			} : selfDims,
 			dims = this.getDims(this.props.space, selfDims, imageDims),
-			pos = {x: this.props.x || 0, y: this.props.y || 0};
+			pos = {x: this.props.x || 0, y: this.props.y || 0
+			};
 
 		return (
-			<Image image={this.state.image} x={pos.x} y={pos.y} width={dims.width} height={dims.height}/>
+			<Image 
+				image={this.state.image} 
+				x={pos.x} 
+				y={pos.y} 
+				width={dims.width} 
+				height={dims.height}/>
 		);
 	};
 }

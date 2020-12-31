@@ -144,6 +144,82 @@ export class MRCnnClient {
         }
         return Promise.resolve<MRCnnResponse>(<any>null);
     }
+
+    allSelected(): Promise<Rect[]> {
+        let url_ = this.baseUrl + "/AllSelected";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAllSelected(_response);
+        });
+    }
+
+    protected processAllSelected(response: Response): Promise<Rect[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(Rect.fromJS(item));
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<Rect[]>(<any>null);
+    }
+
+    selected(selected: Rect[]): Promise<boolean> {
+        let url_ = this.baseUrl + "/Selected";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(selected);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSelected(_response);
+        });
+    }
+
+    protected processSelected(response: Response): Promise<boolean> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 !== undefined ? resultData200 : <any>null;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<boolean>(<any>null);
+    }
 }
 
 export class AnalyzeObject implements IAnalyzeObject {
@@ -440,7 +516,9 @@ export class MRCnnResponse implements IMRCnnResponse {
     free?: number;
     width?: number;
     height?: number;
-    rects?: DrawRects[];
+    rects: DrawRects[] = [];
+    detected: number[] = [];
+    result: DrawRects[] = [];
 
     constructor(data?: IMRCnnResponse) {
         if (data) {
@@ -461,6 +539,16 @@ export class MRCnnResponse implements IMRCnnResponse {
                 this.rects = [] as any;
                 for (let item of _data["rects"])
                     this.rects!.push(DrawRects.fromJS(item));
+            }
+            if (Array.isArray(_data["detected"])) {
+                this.detected = [] as any;
+                for (let item of _data["detected"])
+                    this.detected!.push(item);
+            }
+            if (Array.isArray(_data["result"])) {
+                this.result = [] as any;
+                for (let item of _data["result"])
+                    this.result!.push(DrawRects.fromJS(item));
             }
         }
     }
@@ -483,6 +571,16 @@ export class MRCnnResponse implements IMRCnnResponse {
             for (let item of this.rects)
                 data["rects"].push(item.toJSON());
         }
+        if (Array.isArray(this.detected)) {
+            data["detected"] = [];
+            for (let item of this.detected)
+                data["detected"].push(item);
+        }
+        if (Array.isArray(this.result)) {
+            data["result"] = [];
+            for (let item of this.result)
+                data["result"].push(item.toJSON());
+        }
         return data; 
     }
 }
@@ -493,6 +591,8 @@ export interface IMRCnnResponse {
     width?: number;
     height?: number;
     rects?: DrawRects[];
+    detected?: number[];
+    result?: DrawRects[];
 }
 
 export class DrawRects implements IDrawRects {
@@ -541,6 +641,51 @@ export interface IDrawRects {
     y?: number;
     width?: number;
     height?: number;
+}
+
+export class Rect extends Entity implements IRect {
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
+
+    constructor(data?: IRect) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.x1 = _data["x1"];
+            this.y1 = _data["y1"];
+            this.x2 = _data["x2"];
+            this.y2 = _data["y2"];
+        }
+    }
+
+    static fromJS(data: any): Rect {
+        data = typeof data === 'object' ? data : {};
+        let result = new Rect();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["x1"] = this.x1;
+        data["y1"] = this.y1;
+        data["x2"] = this.x2;
+        data["y2"] = this.y2;
+        super.toJSON(data);
+        return data; 
+    }
+}
+
+export interface IRect extends IEntity {
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
 }
 
 export class ApiException extends Error {

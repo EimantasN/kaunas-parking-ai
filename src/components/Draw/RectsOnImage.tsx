@@ -1,49 +1,11 @@
+import { Button } from 'antd';
 import React, { Component } from 'react';
-import { Stage, Layer, Rect, Text } from 'react-konva';
-import Konva from 'konva';
-import { MRCnnClient, MRCnnResponse } from '../Api/api';
+import { Stage, Layer } from 'react-konva';
+import { MRCnnResponse } from '../Api/api';
 import Img from './Img';
-
-interface IColoredRectProps {
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-}
-
-interface IColoredRectState {
-  color: string,
-  selected: boolean
-}
-
-class ColoredRect extends React.Component<IColoredRectProps, IColoredRectState> {
-  state = {
-    color: 'green',
-    selected: false
-  };
-
-  handleClick = () => {
-    this.setState({
-      color: Konva.Util.getRandomColor(),
-      selected: !this.state.selected
-    });
-  };
-
-  render() {
-    return (
-      <Rect
-        x={this.props.x}
-        y={this.props.y}
-        width={this.props.width}
-        height={this.props.height}
-        stroke= {this.state.selected ? 'green' : 'red'}
-        strokeWidth={this.state.selected ? 2 : 0.2}
-        shadowBlur={2}
-        onClick={this.handleClick}
-      />
-    );
-  }
-}
+import PredictedRect from './Rects/PredictedRect';
+import SelectedRect from './Rects/SelectedRect';
+import { Slider, Switch } from 'antd';
 
 interface IRectsOnImageProps {
   model?: MRCnnResponse,
@@ -51,26 +13,72 @@ interface IRectsOnImageProps {
   scale: number
 }
 
-export default class RectsOnImage extends Component<IRectsOnImageProps> {
+interface IRectsOnImageState {
+  suggestions: boolean,
+  predictions: boolean,
+  confidence: number
+}
 
-  public getRects(response: MRCnnResponse | undefined): any[] {
+export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOnImageState> {
+
+  constructor(props: IRectsOnImageProps) {
+    super(props);
+
+    this.state = {
+      suggestions: false,
+      predictions: false,
+      confidence: 50
+    }
+  }
+
+  public getSuggestios(response: MRCnnResponse | undefined): any[] {
     const rects: any[] = [];
     response?.rects?.forEach((el) => {
-      rects.push(<ColoredRect 
+      rects.push(<SelectedRect 
         x={(el.x ?? 0) * this.props.scale}
         y={(el.y ?? 0) * this.props.scale}
         width={(el.width ?? 0) * this.props.scale}
         height={(el.height ?? 0) * this.props.scale}
       />);
     });
-    console.log('rects');
+    return rects;
+  }
+
+  public getWatched(response: MRCnnResponse | undefined): any[] {
+    const rects: any[] = [];
+    if (response) {
+      response.result.forEach((el, index) => {
+        rects.push(<PredictedRect 
+          x={(el.x ?? 0) * this.props.scale}
+          y={(el.y ?? 0) * this.props.scale}
+          width={(el.width ?? 0) * this.props.scale}
+          height={(el.height ?? 0) * this.props.scale}
+          value={response.detected[index]}
+          confidence={this.state.confidence / 100}
+        />);
+      });
+    }
     return rects;
   }
 
   render() {
+    const { suggestions, predictions } = this.state;
     const width = ((this.props.model?.width ?? 0) * this.props.scale);
     const height = ((this.props.model?.height ?? 0) * this.props.scale);
     return (
+      <>
+      <div>
+        <p>Confidence level</p>
+        <Slider defaultValue={this.state.confidence} onChange={(value: number) => this.setState({confidence: value })} />
+        <p></p>
+        <Button type="dashed" onClick={() => {
+          this.setState({suggestions: !this.state.suggestions});
+        }}>Show Suggestions</Button>
+        <Button type="primary" onClick={() => {
+          this.setState({predictions: !this.state.predictions});
+        }}>Predictions</Button>
+      </div>
+      <p></p>
       <Stage width={width} height={height}>
         <Layer width={width} height={height}>
           <Img 
@@ -78,9 +86,12 @@ export default class RectsOnImage extends Component<IRectsOnImageProps> {
             width={width} 
             height={height} 
             space="fill"/>
-          {this.getRects(this.props.model)}
+          {predictions ? this.getWatched(this.props.model) : null}
+          {suggestions ? this.getSuggestios(this.props.model) : null}
         </Layer>
       </Stage>
+      <p></p>
+      </>
     );
   }
 }

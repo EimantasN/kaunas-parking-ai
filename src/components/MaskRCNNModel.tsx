@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { DetectionClient, MRCnnClient, MRCnnResponse } from './Api/api';
+import { MRCnnClient, MRCnnResponse } from './Api/api';
 import Stats from './Stats';
 import { Radio } from 'antd';
+import DrawAnnotations from './Draw/DrawAnnotations';
 import RectsOnImage from './Draw/RectsOnImage';
 
 export interface IMaskRCNNModelProps {
@@ -87,13 +88,12 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
               scale={0.5}
               url={this.state.getBaseUrl()}
             />
-            {/* <img style={{
-                minHeight: '330px',
-                maxHeight: '500px',
-              }} 
-              placeholder="https://img.icons8.com/ios/452/no-image.png"
-              alt="rcnn detection img" 
-              src={this.state.getBaseUrl()}></img> */}
+            <DrawAnnotations 
+              url={this.state.getBaseUrl()}
+              scale={0.5}
+              width={(1920)}
+              height={(1080)}
+            />
           </div>
         </div>
         <p>{this.state.unixTime}</p>
