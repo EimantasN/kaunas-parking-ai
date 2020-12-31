@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Persistence;
 
 namespace CarDetection
 {
@@ -22,6 +23,7 @@ namespace CarDetection
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddPersistence(Configuration);
             services.AddHttpClient();
 
             services.AddCors(o => o.AddPolicy("React", builder =>

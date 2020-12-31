@@ -19,7 +19,6 @@ namespace CarDetection.HostedServices
             while (true)
             {
                 await mrcnn.Predict();
-                await Task.Delay(1000);
             }
         }
     }

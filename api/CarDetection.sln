@@ -5,7 +5,9 @@ VisualStudioVersion = 16.0.30611.23
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CarDetection", "CarDetection\CarDetection.csproj", "{EDBF68D6-7D84-4526-A3B1-DB8EC0792824}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{08B8D97D-12B6-4F5C-8E11-8AFB48772BB7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain", "Domain\Domain.csproj", "{08B8D97D-12B6-4F5C-8E11-8AFB48772BB7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Persistence", "Persistence\Persistence.csproj", "{F66FF0A7-D695-405B-A5F1-82C57DE87576}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{08B8D97D-12B6-4F5C-8E11-8AFB48772BB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{08B8D97D-12B6-4F5C-8E11-8AFB48772BB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{08B8D97D-12B6-4F5C-8E11-8AFB48772BB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F66FF0A7-D695-405B-A5F1-82C57DE87576}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F66FF0A7-D695-405B-A5F1-82C57DE87576}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F66FF0A7-D695-405B-A5F1-82C57DE87576}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F66FF0A7-D695-405B-A5F1-82C57DE87576}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
