@@ -17,17 +17,24 @@ namespace CarDetection.Controllers
             this.controls = controls;
         }
 
-        [HttpGet("/AllSelected")]
+        [HttpGet("/Sources")]
 
-        public async Task<ActionResult<List<Rect>>> AllSelected()
+        public async Task<ActionResult<List<StreamSource>>> Sources()
         {
-            return await controls.AllSelected();
+            return await controls.GetSources();
+        }
+
+        [HttpGet("/AllSelected/source")]
+
+        public async Task<ActionResult<List<Rect>>> AllSelected(int source)
+        {
+            return await controls.AllSelected(source);
         }
 
         [HttpPost("/Selected")]
-        public async Task<ActionResult<bool>> Selected([FromBody] List<Rect> selected)
+        public async Task<ActionResult<bool>> Selected([FromBody] List<Rect> selected, int source)
         {
-            return await controls.Selected(selected);
+            return await controls.Selected(selected, source);
         }
     }
 }

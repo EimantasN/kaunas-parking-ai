@@ -57,7 +57,7 @@ namespace CarDetection.MLModels
 
             try
             {
-                List<Rect> positions = await controls.AllSelected();
+                List<Rect> positions = await controls.ActiveAllSelected();
                 if (positions.Count == 0)
                 {
                     LastPrediction.Free = 0;

@@ -14,7 +14,7 @@ export class DetectionClient {
 
     constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
         this.http = http ? http : <any>window;
-        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "https://detection.endev.lt";
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
     }
 
     detect(): Promise<AnalyzeObject> {
@@ -52,18 +52,18 @@ export class DetectionClient {
     }
 }
 
-export class ModelsClient {
+export class ModelControlClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
     protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
 
     constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
         this.http = http ? http : <any>window;
-        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "https://detection.endev.lt";
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
     }
 
-    all(): Promise<MlModel[]> {
-        let url_ = this.baseUrl + "/All";
+    sources(): Promise<StreamSource[]> {
+        let url_ = this.baseUrl + "/Sources";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ = <RequestInit>{
@@ -74,11 +74,11 @@ export class ModelsClient {
         };
 
         return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processAll(_response);
+            return this.processSources(_response);
         });
     }
 
-    protected processAll(response: Response): Promise<MlModel[]> {
+    protected processSources(response: Response): Promise<StreamSource[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -88,7 +88,7 @@ export class ModelsClient {
             if (Array.isArray(resultData200)) {
                 result200 = [] as any;
                 for (let item of resultData200)
-                    result200!.push(MlModel.fromJS(item));
+                    result200!.push(StreamSource.fromJS(item));
             }
             return result200;
             });
@@ -97,56 +97,15 @@ export class ModelsClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<MlModel[]>(<any>null);
-    }
-}
-
-export class MRCnnClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : <any>window;
-        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "https://detection.endev.lt";
+        return Promise.resolve<StreamSource[]>(<any>null);
     }
 
-    predict(): Promise<MRCnnResponse> {
-        let url_ = this.baseUrl + "/Predict";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_ = <RequestInit>{
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processPredict(_response);
-        });
-    }
-
-    protected processPredict(response: Response): Promise<MRCnnResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = MRCnnResponse.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<MRCnnResponse>(<any>null);
-    }
-
-    allSelected(): Promise<Rect[]> {
-        let url_ = this.baseUrl + "/AllSelected";
+    allSelected(source?: number | undefined): Promise<Rect[]> {
+        let url_ = this.baseUrl + "/AllSelected/source?";
+        if (source === null)
+            throw new Error("The parameter 'source' cannot be null.");
+        else if (source !== undefined)
+            url_ += "source=" + encodeURIComponent("" + source) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ = <RequestInit>{
@@ -183,8 +142,12 @@ export class MRCnnClient {
         return Promise.resolve<Rect[]>(<any>null);
     }
 
-    selected(selected: Rect[]): Promise<boolean> {
-        let url_ = this.baseUrl + "/Selected";
+    selected(selected: Rect[], source?: number | undefined): Promise<boolean> {
+        let url_ = this.baseUrl + "/Selected?";
+        if (source === null)
+            throw new Error("The parameter 'source' cannot be null.");
+        else if (source !== undefined)
+            url_ += "source=" + encodeURIComponent("" + source) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(selected);
@@ -219,6 +182,51 @@ export class MRCnnClient {
             });
         }
         return Promise.resolve<boolean>(<any>null);
+    }
+}
+
+export class MRCnnClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : <any>window;
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
+    }
+
+    predict(): Promise<MRCnnResponse> {
+        let url_ = this.baseUrl + "/Predict";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ = <RequestInit>{
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processPredict(_response);
+        });
+    }
+
+    protected processPredict(response: Response): Promise<MRCnnResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MRCnnResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MRCnnResponse>(<any>null);
     }
 }
 
@@ -384,90 +392,15 @@ export interface IEntity {
     id?: number;
 }
 
-export class TrackedEntity extends Entity implements ITrackedEntity {
-    created?: Date;
-    updated?: Date;
-
-    constructor(data?: ITrackedEntity) {
-        super(data);
-    }
-
-    init(_data?: any) {
-        super.init(_data);
-        if (_data) {
-            this.created = _data["created"] ? new Date(_data["created"].toString()) : <any>undefined;
-            this.updated = _data["updated"] ? new Date(_data["updated"].toString()) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): TrackedEntity {
-        data = typeof data === 'object' ? data : {};
-        let result = new TrackedEntity();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["created"] = this.created ? this.created.toISOString() : <any>undefined;
-        data["updated"] = this.updated ? this.updated.toISOString() : <any>undefined;
-        super.toJSON(data);
-        return data; 
-    }
-}
-
-export interface ITrackedEntity extends IEntity {
-    created?: Date;
-    updated?: Date;
-}
-
-export class MlModel extends TrackedEntity implements IMlModel {
-    path?: string | undefined;
-    name?: string | undefined;
-    stream?: StreamSource | undefined;
-
-    constructor(data?: IMlModel) {
-        super(data);
-    }
-
-    init(_data?: any) {
-        super.init(_data);
-        if (_data) {
-            this.path = _data["path"];
-            this.name = _data["name"];
-            this.stream = _data["stream"] ? StreamSource.fromJS(_data["stream"]) : <any>undefined;
-        }
-    }
-
-    static fromJS(data: any): MlModel {
-        data = typeof data === 'object' ? data : {};
-        let result = new MlModel();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["path"] = this.path;
-        data["name"] = this.name;
-        data["stream"] = this.stream ? this.stream.toJSON() : <any>undefined;
-        super.toJSON(data);
-        return data; 
-    }
-}
-
-export interface IMlModel extends ITrackedEntity {
-    path?: string | undefined;
-    name?: string | undefined;
-    stream?: StreamSource | undefined;
-}
-
 export class StreamSource extends Entity implements IStreamSource {
     url?: string | undefined;
     miliseconds?: number;
     current?: number;
     increment?: number;
     refresh?: boolean;
+    active?: boolean;
+    selected?: Rect[] | undefined;
+    mrCnnSettingId?: number;
 
     constructor(data?: IStreamSource) {
         super(data);
@@ -481,6 +414,13 @@ export class StreamSource extends Entity implements IStreamSource {
             this.current = _data["current"];
             this.increment = _data["increment"];
             this.refresh = _data["refresh"];
+            this.active = _data["active"];
+            if (Array.isArray(_data["selected"])) {
+                this.selected = [] as any;
+                for (let item of _data["selected"])
+                    this.selected!.push(Rect.fromJS(item));
+            }
+            this.mrCnnSettingId = _data["mrCnnSettingId"];
         }
     }
 
@@ -498,6 +438,13 @@ export class StreamSource extends Entity implements IStreamSource {
         data["current"] = this.current;
         data["increment"] = this.increment;
         data["refresh"] = this.refresh;
+        data["active"] = this.active;
+        if (Array.isArray(this.selected)) {
+            data["selected"] = [];
+            for (let item of this.selected)
+                data["selected"].push(item.toJSON());
+        }
+        data["mrCnnSettingId"] = this.mrCnnSettingId;
         super.toJSON(data);
         return data; 
     }
@@ -509,6 +456,58 @@ export interface IStreamSource extends IEntity {
     current?: number;
     increment?: number;
     refresh?: boolean;
+    active?: boolean;
+    selected?: Rect[] | undefined;
+    mrCnnSettingId?: number;
+}
+
+export class Rect extends Entity implements IRect {
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
+    streamSourceId?: number;
+
+    constructor(data?: IRect) {
+        super(data);
+    }
+
+    init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.x1 = _data["x1"];
+            this.y1 = _data["y1"];
+            this.x2 = _data["x2"];
+            this.y2 = _data["y2"];
+            this.streamSourceId = _data["streamSourceId"];
+        }
+    }
+
+    static fromJS(data: any): Rect {
+        data = typeof data === 'object' ? data : {};
+        let result = new Rect();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["x1"] = this.x1;
+        data["y1"] = this.y1;
+        data["x2"] = this.x2;
+        data["y2"] = this.y2;
+        data["streamSourceId"] = this.streamSourceId;
+        super.toJSON(data);
+        return data; 
+    }
+}
+
+export interface IRect extends IEntity {
+    x1?: number;
+    y1?: number;
+    x2?: number;
+    y2?: number;
+    streamSourceId?: number;
 }
 
 export class MRCnnResponse implements IMRCnnResponse {
@@ -516,9 +515,10 @@ export class MRCnnResponse implements IMRCnnResponse {
     free?: number;
     width?: number;
     height?: number;
-    rects: DrawRects[] = [];
-    detected: number[] = [];
-    result: DrawRects[] = [];
+    online?: boolean;
+    rects?: DrawRects[];
+    detected?: number[];
+    result?: DrawRects[];
 
     constructor(data?: IMRCnnResponse) {
         if (data) {
@@ -535,6 +535,7 @@ export class MRCnnResponse implements IMRCnnResponse {
             this.free = _data["free"];
             this.width = _data["width"];
             this.height = _data["height"];
+            this.online = _data["online"];
             if (Array.isArray(_data["rects"])) {
                 this.rects = [] as any;
                 for (let item of _data["rects"])
@@ -566,6 +567,7 @@ export class MRCnnResponse implements IMRCnnResponse {
         data["free"] = this.free;
         data["width"] = this.width;
         data["height"] = this.height;
+        data["online"] = this.online;
         if (Array.isArray(this.rects)) {
             data["rects"] = [];
             for (let item of this.rects)
@@ -590,6 +592,7 @@ export interface IMRCnnResponse {
     free?: number;
     width?: number;
     height?: number;
+    online?: boolean;
     rects?: DrawRects[];
     detected?: number[];
     result?: DrawRects[];
@@ -641,51 +644,6 @@ export interface IDrawRects {
     y?: number;
     width?: number;
     height?: number;
-}
-
-export class Rect extends Entity implements IRect {
-    x1?: number;
-    y1?: number;
-    x2?: number;
-    y2?: number;
-
-    constructor(data?: IRect) {
-        super(data);
-    }
-
-    init(_data?: any) {
-        super.init(_data);
-        if (_data) {
-            this.x1 = _data["x1"];
-            this.y1 = _data["y1"];
-            this.x2 = _data["x2"];
-            this.y2 = _data["y2"];
-        }
-    }
-
-    static fromJS(data: any): Rect {
-        data = typeof data === 'object' ? data : {};
-        let result = new Rect();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["x1"] = this.x1;
-        data["y1"] = this.y1;
-        data["x2"] = this.x2;
-        data["y2"] = this.y2;
-        super.toJSON(data);
-        return data; 
-    }
-}
-
-export interface IRect extends IEntity {
-    x1?: number;
-    y1?: number;
-    x2?: number;
-    y2?: number;
 }
 
 export class ApiException extends Error {

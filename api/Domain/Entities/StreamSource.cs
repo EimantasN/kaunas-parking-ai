@@ -14,6 +14,8 @@ namespace Domain.Entities
 
         public bool Refresh { get; set; }
 
+        public bool Active { get; set; }
+
         public List<Rect> Selected { get; set; }
 
         public virtual int MRCnnSettingId { get; set; }

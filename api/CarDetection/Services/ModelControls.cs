@@ -10,38 +10,107 @@ namespace CarDetection.Services
 {
     public class ModelControls : IModelControls
     {
+        public int ActiveSource { get; set; }
+
         private readonly CIDMDbContext context;
 
-        private HashSet<Rect>? SelectedRects { get; set; }
+        private Dictionary<int, HashSet<Rect>> SelectedRects { get; set; }
 
         public ModelControls(CIDMDbContext context)
         {
             this.context = context;
+            SelectedRects = new Dictionary<int, HashSet<Rect>>();
         }
 
-        public async Task<List<Rect>> AllSelected()
+        public async Task<bool> SetActive(int source)
         {
-            if (SelectedRects == null)
+            var sourceModel = await context.Sources
+                .AsNoTracking()
+                .FirstAsync(x => x.Id == source);
+
+            var model = await context.MRCnnSettings
+                .Include(x => x.Sources)
+                .FirstAsync();
+
+            model.Sources.ForEach(x => { x.Active = x.Id == source ? true : false; });
+
+            await context.SaveChangesAsync();
+
+            ActiveSource = source;
+
+            return true;
+        }
+
+        public async Task<List<Rect>> ActiveAllSelected()
+        {
+            if (ActiveSource == 0) 
             {
-                SelectedRects = new HashSet<Rect>(await this.context.Rects
-                .ToListAsync());
+                var model = await context.MRCnnSettings
+                    .Include(x => x.Sources)
+                    .FirstAsync();
+
+                ActiveSource = model.Sources.Single(x => x.Active).Id;
             }
 
-            return SelectedRects.ToList();
+            return await AllSelected(ActiveSource);
         }
 
-        public async Task<bool> Selected(List<Rect> selected)
+        public async Task<List<Rect>> AllSelected(int source)
         {
-            SelectedRects = new HashSet<Rect>(selected);
+            if (!SelectedRects.ContainsKey(source))
+            {
+                var selected = await this.context.Rects
+                    .AsNoTracking()
+                    .ToListAsync();
+                SelectedRects = new Dictionary<int, HashSet<Rect>>();
+                SelectedRects.Add(source, new HashSet<Rect>(selected));
+            }
 
-            var current = await this.context.Rects
-                .ToListAsync();
+            return SelectedRects[source].ToList();
+        }
 
-            this.context.RemoveRange(current);
+        public async Task<bool> Selected(List<Rect> selected, int source)
+        {
+            SelectedRects[source] = new HashSet<Rect>(selected);
 
-            this.context.Rects.AddRange(SelectedRects.ToList());
+            var current = await this.context.Sources
+                .Include(x => x.Selected)
+                .FirstOrDefaultAsync(x => x.Id == source);
+
+            if (current == null)
+                return false;
+
+            selected.ForEach(x => { x.Id = 0; });
+
+            current.Selected = selected;
+
             await this.context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<List<StreamSource>> GetSources()
+        {
+            var model = await context.MRCnnSettings
+                .AsNoTracking()
+                .Include(x => x.Sources)
+                .FirstAsync();
+
+            if (model.Sources.Count == 0)
+                return new List<StreamSource>();
+
+            var active = model.Sources.FirstOrDefault(x => x.Active);
+            if (active == null)
+            {
+                var source = context.Sources.First(x => x.Id == model.Sources[0].Id);
+                source.Active = true;
+                await context.SaveChangesAsync();
+
+                return await GetSources();
+            }
+
+            ActiveSource = model.Sources.First().Id;
+
+            return model.Sources;
         }
     }
 }

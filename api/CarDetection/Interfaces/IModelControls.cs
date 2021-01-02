@@ -6,8 +6,14 @@ namespace CarDetection.Interfaces
 {
     public interface IModelControls
     {
-        Task<List<Rect>> AllSelected();
+        Task<bool> SetActive(int source);
 
-        Task<bool> Selected(List<Rect> selected);
+        Task<List<StreamSource>> GetSources();
+
+        Task<List<Rect>> AllSelected(int source);
+
+        Task<List<Rect>> ActiveAllSelected();
+
+        Task<bool> Selected(List<Rect> selected, int source);
     }
 }
