@@ -17,6 +17,12 @@ namespace CarDetection.Controllers
             this.controls = controls;
         }
 
+        [HttpPost("/Active")]
+        public async Task<ActionResult<bool>> Active([FromBody] int source)
+        {
+            return await controls.SetActive(source);
+        }
+
         [HttpGet("/Sources")]
 
         public async Task<ActionResult<List<StreamSource>>> Sources()

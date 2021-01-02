@@ -18,6 +18,7 @@ class Img extends Component {
 	constructor(...args) {
 		super(...args);
 		this.state = {
+			lastUpdate: null,
 			image: null,
 			error: false,
 			loaded: false
@@ -52,7 +53,6 @@ class Img extends Component {
 					img.onerror();
 				} else {
 					img.loaded = true;
-					console.log("image load handlers", img.loadFns);
 					img.loadFns.forEach(fn => fn.call(img));
 				}
 			};
@@ -61,23 +61,24 @@ class Img extends Component {
 		if (!img.loaded && !img.error) {
 			img.loadFns.push(() => {
 				img.loaded = true;
-				this.setState({loaded: true, image: img});
+				this.setState({loaded: true, image: img, lastUpdate: this.props.lastUpdate});
 			});
 
 			img.errorFns.push(() => {
 				img.error = true;
-				this.setState({error: true, image: brokenImage});
+				this.setState({error: true, image: brokenImage, lastUpdate: this.props.lastUpdate});
 			});
 
 		} else if (img.error) {
 			this.setState({error: true, image: brokenImage});
 			console.log('Error previously loading image', src);
 		} else {
-			this.setState({loaded: true, image: img});
+			this.setState({loaded: true, image: img, lastUpdate: this.props.lastUpdate});
 		}
 
 		if (!img.src) {
 			img.src = src;
+			console.log(src);
 		}
 	}
 
@@ -104,11 +105,11 @@ class Img extends Component {
 		}
 	};
 
-	componentWillMount = () => {
-		this.loadImg(this.props.src);
-	};
-
 	render = () => {
+		if (this.state.lastUpdate !== this.props.lastUpdate) {
+			this.loadImg(this.props.src);
+			console.log('load');
+		}
 		var selfDims = {
 				width: this.props.width, 
 				height: this.props.height
@@ -120,7 +121,7 @@ class Img extends Component {
 			} : selfDims,
 			dims = this.getDims(this.props.space, selfDims, imageDims),
 			pos = {x: this.props.x || 0, y: this.props.y || 0
-			};
+		};
 
 		return (
 			<Image 

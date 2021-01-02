@@ -10,7 +10,8 @@ import { Slider } from 'antd';
 interface IRectsOnImageProps {
   model?: MRCnnResponse,
   url: string,
-  scale: number
+  scale: number,
+  lastUpdate: Date
 }
 
 interface IRectsOnImageState {
@@ -31,7 +32,7 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
     }
   }
 
-  public getSuggestios(response: MRCnnResponse | undefined): any[] {
+  public getSuggestions(response: MRCnnResponse | undefined): any[] {
     const rects: any[] = [];
     response?.rects?.forEach((el) => {
       rects.push(<SelectedRect 
@@ -46,14 +47,14 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
 
   public getWatched(response: MRCnnResponse | undefined): any[] {
     const rects: any[] = [];
-    if (response) {
+    if (response && response.result && response.detected) {
       response.result.forEach((el, index) => {
         rects.push(<PredictedRect 
           x={(el.x ?? 0) * this.props.scale}
           y={(el.y ?? 0) * this.props.scale}
           width={(el.width ?? 0) * this.props.scale}
           height={(el.height ?? 0) * this.props.scale}
-          value={response.detected[index]}
+          value={response.detected ? response.detected[index] : 0}
           confidence={this.state.confidence / 100}
         />);
       });
@@ -85,9 +86,10 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
             src={this.props.url} 
             width={width} 
             height={height} 
-            space="fill"/>
+            space="fill"
+            lastUpdate={this.props.lastUpdate}/>
           {predictions ? this.getWatched(this.props.model) : null}
-          {suggestions ? this.getSuggestios(this.props.model) : null}
+          {suggestions ? this.getSuggestions(this.props.model) : null}
         </Layer>
       </Stage>
       <p></p>

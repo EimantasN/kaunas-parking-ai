@@ -94,6 +94,7 @@ namespace CarDetection.MLModels
 
                 LastPrediction.Width = model.Width;
                 LastPrediction.Height = model.Height;
+                LastPrediction.SourceId = controls.Source.Id;
                 LastPrediction.ParseRects(model.Rects);
             }
             catch (Exception e) 
@@ -122,9 +123,9 @@ namespace CarDetection.MLModels
             {
                 LastPrediction.Online = true;
             }
+            var content = await response.Content.ReadAsStringAsync();
             try
             {
-                var content = await response.Content.ReadAsStringAsync();
                 return JsonConvert.DeserializeObject<ModelResponse>(content);
             }
             catch
@@ -149,7 +150,7 @@ namespace CarDetection.MLModels
             });
             stringBuilder.Remove(stringBuilder.Length - 1, 1);
             var pos = WebUtility.UrlEncode(stringBuilder.ToString());
-            var url = "http%3A%2F%2F118.220.7.47%3A8000%2Fwebcapture.jpg%3Fcommand%3Dsnap%26channel%3D1%3F1609097577";
+            var url = WebUtility.UrlEncode(controls.Source.Url);
 
             return $"{BaseUrl}?url={url}&pos={pos}";
         }

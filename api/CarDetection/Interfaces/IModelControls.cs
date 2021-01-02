@@ -6,6 +6,8 @@ namespace CarDetection.Interfaces
 {
     public interface IModelControls
     {
+        StreamSource Source { get; }
+
         Task<bool> SetActive(int source);
 
         Task<List<StreamSource>> GetSources();

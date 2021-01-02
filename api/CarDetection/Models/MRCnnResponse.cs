@@ -15,6 +15,8 @@ namespace CarDetection.Models
 
         public bool Online { get; set; }
 
+        public int SourceId { get; set; }
+
         public List<DrawRects> Rects { get; set; } = new List<DrawRects>();
 
         public List<double> Detected { get; set; } = new List<double>();

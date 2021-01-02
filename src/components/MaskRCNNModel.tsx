@@ -1,7 +1,7 @@
 import * as React from 'react';
-import { MRCnnClient, MRCnnResponse } from './Api/api';
+import { ModelControlClient, MRCnnClient, MRCnnResponse, StreamSource } from './Api/api';
 import Stats from './Stats';
-import { Radio } from 'antd';
+import { Radio, Spin, Alert } from 'antd';
 import DrawAnnotations from './Draw/DrawAnnotations';
 import RectsOnImage from './Draw/RectsOnImage';
 
@@ -15,6 +15,7 @@ export interface IMaskRCNNModelState {
     currentSource: number,
     unixTime: string,
     lastUpdate: Date,
+    loading: boolean,
     timer?: NodeJS.Timeout | undefined,
     getBaseUrl(): string
 }
@@ -22,50 +23,78 @@ export interface IMaskRCNNModelState {
 export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, IMaskRCNNModelState> {
   public refresh: number = 5;
   public Client: MRCnnClient = new MRCnnClient();
+  public ControlClient: ModelControlClient = new ModelControlClient();
 
-  private baseUlrOptions: string[] = [
-    'http://80.34.181.34:85/jpgmulreq/1/image.jpg?key=1516975535684&lq=1&',
-    'http://118.220.7.47:8000/webcapture.jpg?command=snap&channel=1?',
-    'http://218.217.95.45:60001/cgi-bin/snapshot.cgi?chn=0&u=admin&p=&q=0&'
-  ];
+  private Sources: StreamSource[];
 
   constructor(props: IMaskRCNNModelProps) {
     super(props);
 
+    this.Sources = [];
     this.state = {
         count: 10,
         free: 10,
-        currentSource: 1,
+        loading: true,
+        currentSource: -1,
         unixTime: `${Math.round(Date.now() / 1000)}`,
         lastUpdate: new Date(),
         getBaseUrl: () => {
-          return `${this.baseUlrOptions[this.state.currentSource]}${this.state.unixTime}`;
+          console.log(`${this.Sources[this.state.currentSource]?.url ?? ''}`);
+          return `${this.Sources[this.state.currentSource]?.url ?? ''}`;
         }
     }
   }
 
-  public onChange = (e: any) => {
-    this.setState({currentSource: e.target.value});
-    this.update();
+  public async componentDidMount() {
+    this.Sources = await this.ControlClient.sources();
+    await this.update();
+    this.setState({timer: setInterval(async () => {
+        await this.update();
+    }, 1000)});
+  }
+
+  public onChange = async (e: any) => {
+    const source = this.Sources[e.target.value];
+    if (source && source.id) {
+      await this.ControlClient.active(source.id);
+      this.setState({
+        currentSource: e.target.value,
+        loading: true,
+      });
+    }
   };
 
   private getOptions(): typeof Radio[] {
     const arr: any[] = [];
-    for (var i = 0; i < this.baseUlrOptions.length; i++) {
+    for (var i = 0; i < this.Sources.length; i++) {
       arr.push(<Radio key={i} value={i}>{i}</Radio>);
     }
 
     return arr;
   }
 
-  componentDidMount() {
-    this.update();
-    this.setState({timer: setInterval(async () => {
-        this.update();
-    }, this.refresh * 1000)});
-  }
-
   public render() {
+    const prediction = this.Sources[this.state.currentSource]?.id && !this.state.loading
+    ? <RectsOnImage 
+        model={this.state.model}
+        scale={this.getScale()}
+        lastUpdate={this.state.lastUpdate}
+        url={this.Sources[this.state.currentSource]?.url ?? ''}
+      />
+    : null;
+    const selection = this.Sources[this.state.currentSource]?.id && !this.state.loading
+      ? <DrawAnnotations 
+          url={this.Sources[this.state.currentSource]?.url ?? ''}
+          scale={this.getScale()}
+          lastUpdate={this.state.lastUpdate}
+          width={this.state.model?.width ?? 0}
+          height={this.state.model?.height ?? 0}
+          sourceId={this.Sources[this.state.currentSource]?.id ?? 0}
+        />
+      : null;
+    const loading = this.state.loading 
+    ? <Spin tip="Loading..."></Spin> 
+   : null;
     return (
       <div>
         <Stats 
@@ -82,33 +111,58 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
         </div>
         <br></br>
         <div className="playerContainer">
-          <div className="player">
-            <RectsOnImage 
-              model={this.state.model}
-              scale={0.5}
-              url={this.state.getBaseUrl()}
-            />
-            <DrawAnnotations 
-              url={this.state.getBaseUrl()}
-              scale={0.5}
-              width={(1920)}
-              height={(1080)}
-            />
+          <div className="player" style={{
+            paddingBottom: '50px'
+          }}>
+            {prediction}
+            {selection}
+            {loading}
           </div>
         </div>
-        <p>{this.state.unixTime}</p>
       </div>
     );
+  }
+
+  private getScale(): number {
+    if (this.state.model 
+      && this.state.model?.width 
+      && this.state.model?.height) {
+        const byWidth = (100 * 800) / this.state.model.width;
+        return byWidth / 100;
+    } else {
+      return 1;
+    }
   }
 
   public async update() {
     const response = await this.Client.predict();
     this.setState({
         model: response,
+        currentSource: this.state.currentSource === -1 
+          ? this.Sources.findIndex(x => x.active === true)
+          : this.state.currentSource,
+        loading: this.isLoading(),
         unixTime: `${Math.round(Date.now() / 1000)}`,
         lastUpdate: new Date(),
         count: response.total ?? 0,
         free: response.free ?? 0
     });
+  }
+
+  private isLoading(): boolean {
+    if (!this.state.model) {
+      return true;
+    }
+    if (!this.state.model.sourceId) {
+      return true;
+    }
+    const sourceIndex = this.Sources.findIndex(x => x.id === this.state?.model?.sourceId);
+    if (sourceIndex < 0) {
+      return true;
+    }
+    if (this.state.model.sourceId !== this.Sources[this.state.currentSource].id) {
+      return true;
+    }
+    return false;
   }
 }

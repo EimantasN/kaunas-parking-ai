@@ -51,13 +51,20 @@ interface IPredictedRectProps {
                 height={this.props.height}
                 text={ this.props.value > this.props.confidence ? this.props.value + '' : "FREE"}
                 color={'green'}
+                fill={'green'}
                 padding={5}
                 fontFamily={'Calibri'}
-                fontSize={18}
-                align={'center'}
-                verticalAlign={'center'}
+                fontSize={this.calculateTextSize()}
+                align={'right'}
+                verticalAlign={'left'}
             />
           </Group>
       );
+    }
+
+    private calculateTextSize(): number {
+      const byWidth = this.props.width / 4;
+      const byHeight =  this.props.height / 4;
+      return Math.min(byWidth, byHeight);
     }
   }

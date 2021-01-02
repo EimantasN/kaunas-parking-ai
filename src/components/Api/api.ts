@@ -62,6 +62,44 @@ export class ModelControlClient {
         this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "http://localhost:5000";
     }
 
+    active(source: number): Promise<boolean> {
+        let url_ = this.baseUrl + "/Active";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(source);
+
+        let options_ = <RequestInit>{
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processActive(_response);
+        });
+    }
+
+    protected processActive(response: Response): Promise<boolean> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = resultData200 !== undefined ? resultData200 : <any>null;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<boolean>(<any>null);
+    }
+
     sources(): Promise<StreamSource[]> {
         let url_ = this.baseUrl + "/Sources";
         url_ = url_.replace(/[?&]$/, "");
@@ -100,7 +138,7 @@ export class ModelControlClient {
         return Promise.resolve<StreamSource[]>(<any>null);
     }
 
-    allSelected(source?: number | undefined): Promise<Rect[]> {
+    allSelected(source: number | undefined): Promise<Rect[]> {
         let url_ = this.baseUrl + "/AllSelected/source?";
         if (source === null)
             throw new Error("The parameter 'source' cannot be null.");
@@ -142,7 +180,7 @@ export class ModelControlClient {
         return Promise.resolve<Rect[]>(<any>null);
     }
 
-    selected(selected: Rect[], source?: number | undefined): Promise<boolean> {
+    selected(source: number | undefined, selected: Rect[]): Promise<boolean> {
         let url_ = this.baseUrl + "/Selected?";
         if (source === null)
             throw new Error("The parameter 'source' cannot be null.");
@@ -516,6 +554,7 @@ export class MRCnnResponse implements IMRCnnResponse {
     width?: number;
     height?: number;
     online?: boolean;
+    sourceId?: number;
     rects?: DrawRects[];
     detected?: number[];
     result?: DrawRects[];
@@ -536,6 +575,7 @@ export class MRCnnResponse implements IMRCnnResponse {
             this.width = _data["width"];
             this.height = _data["height"];
             this.online = _data["online"];
+            this.sourceId = _data["sourceId"];
             if (Array.isArray(_data["rects"])) {
                 this.rects = [] as any;
                 for (let item of _data["rects"])
@@ -568,6 +608,7 @@ export class MRCnnResponse implements IMRCnnResponse {
         data["width"] = this.width;
         data["height"] = this.height;
         data["online"] = this.online;
+        data["sourceId"] = this.sourceId;
         if (Array.isArray(this.rects)) {
             data["rects"] = [];
             for (let item of this.rects)
@@ -593,6 +634,7 @@ export interface IMRCnnResponse {
     width?: number;
     height?: number;
     online?: boolean;
+    sourceId?: number;
     rects?: DrawRects[];
     detected?: number[];
     result?: DrawRects[];

@@ -14,12 +14,15 @@ namespace CarDetection.Services
 
         private readonly CIDMDbContext context;
 
+        public StreamSource Source { get; set; }
+
         private Dictionary<int, HashSet<Rect>> SelectedRects { get; set; }
 
         public ModelControls(CIDMDbContext context)
         {
             this.context = context;
             SelectedRects = new Dictionary<int, HashSet<Rect>>();
+            Source = new StreamSource();
         }
 
         public async Task<bool> SetActive(int source)
@@ -33,6 +36,8 @@ namespace CarDetection.Services
                 .FirstAsync();
 
             model.Sources.ForEach(x => { x.Active = x.Id == source ? true : false; });
+
+            Source = model.Sources.First(x => x.Active);
 
             await context.SaveChangesAsync();
 
@@ -50,6 +55,7 @@ namespace CarDetection.Services
                     .FirstAsync();
 
                 ActiveSource = model.Sources.Single(x => x.Active).Id;
+                Source = model.Sources.First(x => x.Active);
             }
 
             return await AllSelected(ActiveSource);
@@ -59,11 +65,12 @@ namespace CarDetection.Services
         {
             if (!SelectedRects.ContainsKey(source))
             {
-                var selected = await this.context.Rects
+                var sourceModel = await this.context.Sources
+                    .Include(x => x.Selected)
                     .AsNoTracking()
-                    .ToListAsync();
+                    .FirstAsync(x => x.Id == source);
                 SelectedRects = new Dictionary<int, HashSet<Rect>>();
-                SelectedRects.Add(source, new HashSet<Rect>(selected));
+                SelectedRects.Add(source, new HashSet<Rect>(sourceModel.Selected));
             }
 
             return SelectedRects[source].ToList();
@@ -79,6 +86,8 @@ namespace CarDetection.Services
 
             if (current == null)
                 return false;
+
+            this.context.Rects.RemoveRange(current.Selected);
 
             selected.ForEach(x => { x.Id = 0; });
 
