@@ -19,7 +19,7 @@ namespace CarDetection.MLModels
 {
     public class MRCnnModel : IMRCnnModel
     {
-        private readonly string BaseUrl = "http://192.168.0.107:5000/predict";
+        private readonly string BaseUrl = "http://212.117.25.59:5000/predict";
 
         private const int SleepWhenOffline = 30000;
 
