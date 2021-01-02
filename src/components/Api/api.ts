@@ -555,6 +555,7 @@ export class MRCnnResponse implements IMRCnnResponse {
     height?: number;
     online?: boolean;
     sourceId?: number;
+    miliseconds?: number;
     rects?: DrawRects[];
     detected?: number[];
     result?: DrawRects[];
@@ -576,6 +577,7 @@ export class MRCnnResponse implements IMRCnnResponse {
             this.height = _data["height"];
             this.online = _data["online"];
             this.sourceId = _data["sourceId"];
+            this.miliseconds = _data["miliseconds"];
             if (Array.isArray(_data["rects"])) {
                 this.rects = [] as any;
                 for (let item of _data["rects"])
@@ -609,6 +611,7 @@ export class MRCnnResponse implements IMRCnnResponse {
         data["height"] = this.height;
         data["online"] = this.online;
         data["sourceId"] = this.sourceId;
+        data["miliseconds"] = this.miliseconds;
         if (Array.isArray(this.rects)) {
             data["rects"] = [];
             for (let item of this.rects)
@@ -635,6 +638,7 @@ export interface IMRCnnResponse {
     height?: number;
     online?: boolean;
     sourceId?: number;
+    miliseconds?: number;
     rects?: DrawRects[];
     detected?: number[];
     result?: DrawRects[];

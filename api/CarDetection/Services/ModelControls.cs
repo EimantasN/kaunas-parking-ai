@@ -69,7 +69,6 @@ namespace CarDetection.Services
                     .Include(x => x.Selected)
                     .AsNoTracking()
                     .FirstAsync(x => x.Id == source);
-                SelectedRects = new Dictionary<int, HashSet<Rect>>();
                 SelectedRects.Add(source, new HashSet<Rect>(sourceModel.Selected));
             }
 

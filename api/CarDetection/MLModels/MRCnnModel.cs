@@ -8,6 +8,7 @@ using Newtonsoft.Json;
 using Persistence;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -37,9 +38,12 @@ namespace CarDetection.MLModels
 
         public MRCnnResponse LastPrediction { get; set; }
 
+        private Stopwatch Timer { get; set; }
+
         public MRCnnModel(IHttpClientFactory httpClientFactory, IModelControls controls)
         {
             _lock = new object();
+            Timer = new Stopwatch();
             this.httpClientFactory = httpClientFactory;
             this.controls = controls;
             LastPrediction = new MRCnnResponse();
@@ -57,7 +61,11 @@ namespace CarDetection.MLModels
 
             try
             {
+                Timer.Restart();
                 List<Rect> positions = await controls.ActiveAllSelected();
+                var currentSourceId = controls.Source.Id;
+                var activeUrl = controls.Source.Url;
+
                 if (positions.Count == 0)
                 {
                     LastPrediction.Free = 0;
@@ -65,7 +73,7 @@ namespace CarDetection.MLModels
                     LastPrediction.Rects = new List<DrawRects>();
                     return;
                 }
-                var model = await SendRequest(positions);
+                var model = await SendRequest(positions, activeUrl);
 
                 var carDetections = model.Data
                     .Where(x => x[1] == "car")
@@ -94,10 +102,11 @@ namespace CarDetection.MLModels
 
                 LastPrediction.Width = model.Width;
                 LastPrediction.Height = model.Height;
-                LastPrediction.SourceId = controls.Source.Id;
+                LastPrediction.SourceId = currentSourceId;
+                LastPrediction.Miliseconds = (int)Timer.ElapsedMilliseconds;
                 LastPrediction.ParseRects(model.Rects);
             }
-            catch (Exception e) 
+            catch (Exception) 
             {
                 LastPrediction.Online = false;
                 await Task.Delay(SleepWhenOffline);
@@ -108,10 +117,10 @@ namespace CarDetection.MLModels
             }
         }
 
-        public async Task<ModelResponse> SendRequest(List<Rect> positions)
+        public async Task<ModelResponse> SendRequest(List<Rect> positions, string activeUrl)
         {
             var client = httpClientFactory.CreateClient();
-            var url = BuildUrl(positions);
+            var url = BuildUrl(positions, activeUrl);
             var response = await client.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
@@ -134,7 +143,7 @@ namespace CarDetection.MLModels
             }
         }
 
-        private string BuildUrl(List<Rect> positions)
+        private string BuildUrl(List<Rect> positions, string activeUrl)
         {
             var stringBuilder = new StringBuilder();
             positions.ForEach((x) =>
@@ -150,7 +159,7 @@ namespace CarDetection.MLModels
             });
             stringBuilder.Remove(stringBuilder.Length - 1, 1);
             var pos = WebUtility.UrlEncode(stringBuilder.ToString());
-            var url = WebUtility.UrlEncode(controls.Source.Url);
+            var url = WebUtility.UrlEncode(activeUrl);
 
             return $"{BaseUrl}?url={url}&pos={pos}";
         }

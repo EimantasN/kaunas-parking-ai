@@ -8,8 +8,8 @@ namespace Persistence
     {
         public static List<string> MRCnnStreamSources = new List<string>
         {
-            "http://80.34.181.34:85/jpgmulreq/1/image.jpg?key=1516975535684&lq=1",
-            "http://118.220.7.47:8000/webcapture.jpg?command=snap&channel=1",
+            "http://80.34.181.34:85/jpgmulreq/1/image.jpg?key=1516975535684&lq=1$",
+            "http://118.220.7.47:8000/webcapture.jpg?command=snap&channel=1$",
             "http://218.217.95.45:60001/cgi-bin/snapshot.cgi?chn=0&u=admin&p=&q=0"
         };
 

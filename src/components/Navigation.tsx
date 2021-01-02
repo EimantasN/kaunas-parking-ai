@@ -29,12 +29,9 @@ export default class Navigation extends React.Component<INavigatioProps, INaviga
     const { current } = this.state;
     return (
         <Menu onClick={this.handleClick} selectedKeys={[current]} mode="horizontal">
-          <Menu.Item key="main" icon={<SettingOutlined />}>
-            Pagrindinis
-          </Menu.Item>
           <SubMenu key="SubMenu" icon={<SettingOutlined />} title="Modeliai">
             <Menu.Item key="mrcnn">
-                <Link to="/mrcnn">
+                <Link to="/">
                     Mask RCNN
                 </Link>
             </Menu.Item>

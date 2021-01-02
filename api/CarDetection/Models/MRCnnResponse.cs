@@ -17,8 +17,9 @@ namespace CarDetection.Models
 
         public int SourceId { get; set; }
 
-        public List<DrawRects> Rects { get; set; } = new List<DrawRects>();
+        public int Miliseconds { get; set; }
 
+        public List<DrawRects> Rects { get; set; } = new List<DrawRects>();
         public List<double> Detected { get; set; } = new List<double>();
         public List<DrawRects> Result { get; set; } = new List<DrawRects>();
 

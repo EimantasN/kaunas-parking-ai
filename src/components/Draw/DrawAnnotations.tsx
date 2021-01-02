@@ -9,7 +9,8 @@ interface IDrawAnnotationsState {
   annotations: Annotation[],
   newAnnotation: Annotation[],
   data: Annotation[],
-  lastSourceId: number
+  lastSourceId: number,
+  show: boolean
 }
 
 interface IDrawAnnotationsProps {
@@ -49,7 +50,8 @@ export default class DrawAnnotations extends Component<IDrawAnnotationsProps, ID
       annotations: [],
       newAnnotation: [],
       data: [],
-      lastSourceId: 0
+      lastSourceId: 0,
+      show: false
     }
   }
   
@@ -101,6 +103,10 @@ export default class DrawAnnotations extends Component<IDrawAnnotationsProps, ID
     }
   };
 
+  public toggle = () => {
+    this.setState({show: !this.state.show});
+  }
+
   public render() {
     this.loadSelections();
     const { annotations, newAnnotation } = this.state;
@@ -108,13 +114,28 @@ export default class DrawAnnotations extends Component<IDrawAnnotationsProps, ID
 
     const width = (this.props.width * this.props.scale);
     const height = (this.props.height * this.props.scale);
+
+    const image = !this.state.show 
+    ? <Img 
+        src={this.props.url} 
+        width={width} 
+        height={height} 
+        lastUpdate={this.props.lastUpdate}
+        space="fill"
+      />
+    : null;
+
     return (
       <>
       <p>Difine locations to monitor</p>
-      <Button 
-        type="primary"
-        onClick={() => this.save()}
-      >Save</Button>
+        <Button 
+          type="primary"
+          onClick={() => this.save()}
+        >Save</Button>
+        <Button 
+          type="ghost"
+          onClick={() => this.toggle()}
+        >{this.state.show ? 'Show' : 'Hide' }</Button>
       <p></p>
       <Stage
         onMouseDown={this.handleMouseDown}
@@ -124,13 +145,7 @@ export default class DrawAnnotations extends Component<IDrawAnnotationsProps, ID
         height={height}
       >
         <Layer>
-          <Img 
-            src={this.props.url} 
-            width={width} 
-            height={height} 
-            lastUpdate={this.props.lastUpdate}
-            space="fill"
-          />
+          {image}
           {annotationsToDraw.map(value => {
             return (
               <DrawedRect
@@ -153,7 +168,6 @@ export default class DrawAnnotations extends Component<IDrawAnnotationsProps, ID
 
   private async loadSelections() {
     if (this.state.lastSourceId !== this.props.sourceId) {
-      console.log(this.state.lastSourceId, this.props.sourceId);
       const { annotations, data } = this.state;
 
       annotations.length = 0;
@@ -198,6 +212,5 @@ export default class DrawAnnotations extends Component<IDrawAnnotationsProps, ID
         rects.push(model);
       });
     await this.Client.selected(this.props.sourceId, rects);
-    console.log(rects);
   }
 };

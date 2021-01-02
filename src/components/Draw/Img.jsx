@@ -21,7 +21,8 @@ class Img extends Component {
 			lastUpdate: null,
 			image: null,
 			error: false,
-			loaded: false
+			loaded: false,
+			loading: false
 		};
 	}
 
@@ -38,7 +39,6 @@ class Img extends Component {
 			img.errorFns = [];
 			img.onerror = function() {
 				img.error = true;
-				console.log("image error handlers", img.errorFns);
 				img.errorFns.forEach(fn => fn.call(img));
 
 			};
@@ -49,7 +49,6 @@ class Img extends Component {
 					invalidImg = img[w] + img[h] == 0;
 
 				if (invalidImg) {
-					console.log("calling image onerror");
 					img.onerror();
 				} else {
 					img.loaded = true;
@@ -61,24 +60,37 @@ class Img extends Component {
 		if (!img.loaded && !img.error) {
 			img.loadFns.push(() => {
 				img.loaded = true;
-				this.setState({loaded: true, image: img, lastUpdate: this.props.lastUpdate});
+				this.setState({
+					loaded: true, 
+					image: img, 
+					lastUpdate: this.props.lastUpdate
+				});
 			});
 
 			img.errorFns.push(() => {
 				img.error = true;
-				this.setState({error: true, image: brokenImage, lastUpdate: this.props.lastUpdate});
+				this.setState({
+					error: true, 
+					image: brokenImage, 
+					lastUpdate: this.props.lastUpdate
+				});
 			});
 
 		} else if (img.error) {
-			this.setState({error: true, image: brokenImage});
+			this.setState({
+				error: true, 
+				image: brokenImage
+			});
 			console.log('Error previously loading image', src);
 		} else {
-			this.setState({loaded: true, image: img, lastUpdate: this.props.lastUpdate});
+			this.setState({
+				loaded: true, 
+				image: img, 
+				lastUpdate: this.props.lastUpdate});
 		}
 
 		if (!img.src) {
 			img.src = src;
-			console.log(src);
 		}
 	}
 
@@ -94,42 +106,17 @@ class Img extends Component {
 			: {height: p.height, width: c.width * (p.height / c.height)};
 	};
 
-	getDims = (space, parent, child) => {
-		switch (space) {
-			case "fill":
-				return this.fillRect(parent, child);
-
-			case "fit":
-			default:
-				return this.fitRect(parent, child);
-		}
-	};
-
 	render = () => {
 		if (this.state.lastUpdate !== this.props.lastUpdate) {
 			this.loadImg(this.props.src);
-			console.log('load');
 		}
-		var selfDims = {
-				width: this.props.width, 
-				height: this.props.height
-			},
-			image = this.state.image,
-			imageDims = image ? {
-				width: image.width, 
-				height: image.height
-			} : selfDims,
-			dims = this.getDims(this.props.space, selfDims, imageDims),
-			pos = {x: this.props.x || 0, y: this.props.y || 0
-		};
-
 		return (
 			<Image 
 				image={this.state.image} 
-				x={pos.x} 
-				y={pos.y} 
-				width={dims.width} 
-				height={dims.height}/>
+				x={0} 
+				y={0}
+				width={this.props.width} 
+				height={this.props.height}/>
 		);
 	};
 }

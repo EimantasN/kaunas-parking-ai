@@ -27,7 +27,7 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
 
     this.state = {
       suggestions: false,
-      predictions: false,
+      predictions: true,
       confidence: 50
     }
   }

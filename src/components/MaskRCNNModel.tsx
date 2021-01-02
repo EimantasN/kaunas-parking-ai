@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { ModelControlClient, MRCnnClient, MRCnnResponse, StreamSource } from './Api/api';
 import Stats from './Stats';
-import { Radio, Spin, Alert } from 'antd';
+import { Radio, Spin } from 'antd';
 import DrawAnnotations from './Draw/DrawAnnotations';
 import RectsOnImage from './Draw/RectsOnImage';
 
@@ -16,12 +16,13 @@ export interface IMaskRCNNModelState {
     unixTime: string,
     lastUpdate: Date,
     loading: boolean,
+    scale: number,
     timer?: NodeJS.Timeout | undefined,
     getBaseUrl(): string
 }
 
 export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, IMaskRCNNModelState> {
-  public refresh: number = 5;
+  public refresh: number = 3;
   public Client: MRCnnClient = new MRCnnClient();
   public ControlClient: ModelControlClient = new ModelControlClient();
 
@@ -38,8 +39,8 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
         currentSource: -1,
         unixTime: `${Math.round(Date.now() / 1000)}`,
         lastUpdate: new Date(),
+        scale: 1,
         getBaseUrl: () => {
-          console.log(`${this.Sources[this.state.currentSource]?.url ?? ''}`);
           return `${this.Sources[this.state.currentSource]?.url ?? ''}`;
         }
     }
@@ -50,7 +51,7 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
     await this.update();
     this.setState({timer: setInterval(async () => {
         await this.update();
-    }, 1000)});
+    }, this.refresh * 1000)});
   }
 
   public onChange = async (e: any) => {
@@ -75,17 +76,17 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
 
   public render() {
     const prediction = this.Sources[this.state.currentSource]?.id && !this.state.loading
-    ? <RectsOnImage 
-        model={this.state.model}
-        scale={this.getScale()}
-        lastUpdate={this.state.lastUpdate}
-        url={this.Sources[this.state.currentSource]?.url ?? ''}
-      />
-    : null;
+      ? <RectsOnImage 
+          model={this.state.model}
+          scale={this.state.scale}
+          lastUpdate={this.state.lastUpdate}
+          url={this.Sources[this.state.currentSource]?.url + this.state.unixTime ?? ''}
+        />
+      : null;
     const selection = this.Sources[this.state.currentSource]?.id && !this.state.loading
       ? <DrawAnnotations 
-          url={this.Sources[this.state.currentSource]?.url ?? ''}
-          scale={this.getScale()}
+          url={this.Sources[this.state.currentSource]?.url + this.state.unixTime ?? ''}
+          scale={this.state.scale}
           lastUpdate={this.state.lastUpdate}
           width={this.state.model?.width ?? 0}
           height={this.state.model?.height ?? 0}
@@ -93,8 +94,8 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
         />
       : null;
     const loading = this.state.loading 
-    ? <Spin tip="Loading..."></Spin> 
-   : null;
+      ? <Spin tip="Loading..."></Spin> 
+      : null;
     return (
       <div>
         <Stats 
@@ -104,7 +105,9 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
         />
         <div className="playerContainer">
           <div className="player">
-            <Radio.Group onChange={this.onChange} value={this.state.currentSource}>
+            <Radio.Group 
+              onChange={this.onChange} 
+              value={this.state.currentSource}>
               {this.getOptions()}
             </Radio.Group>
           </div>
@@ -123,11 +126,11 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
     );
   }
 
-  private getScale(): number {
-    if (this.state.model 
-      && this.state.model?.width 
-      && this.state.model?.height) {
-        const byWidth = (100 * 800) / this.state.model.width;
+  private getScale(model?: MRCnnResponse): number {
+    if (model 
+        && model?.width 
+        && model?.height) {
+        const byWidth = (100 * 800) / model.width;
         return byWidth / 100;
     } else {
       return 1;
@@ -136,16 +139,22 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
 
   public async update() {
     const response = await this.Client.predict();
+    const currentSource = this.state.currentSource === -1 
+      ? this.Sources.findIndex(x => x.active === true)
+      : this.state.currentSource;
+
+    if (response.sourceId !== this.Sources[currentSource]?.id) {
+      return;
+    }
     this.setState({
         model: response,
-        currentSource: this.state.currentSource === -1 
-          ? this.Sources.findIndex(x => x.active === true)
-          : this.state.currentSource,
+        currentSource: currentSource,
         loading: this.isLoading(),
         unixTime: `${Math.round(Date.now() / 1000)}`,
         lastUpdate: new Date(),
         count: response.total ?? 0,
-        free: response.free ?? 0
+        free: response.free ?? 0,
+        scale: this.getScale(response)
     });
   }
 
