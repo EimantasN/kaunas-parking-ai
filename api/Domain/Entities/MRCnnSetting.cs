@@ -4,8 +4,6 @@ namespace Domain.Entities
 {
     public class MRCnnSetting : TrackedEntity
     {
-        public string Source { get; set; }
-
-        public List<Rect> Selected { get; set; }
+        public List<StreamSource> Sources { get; set; }
     }
 }

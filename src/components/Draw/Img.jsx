@@ -29,7 +29,7 @@ class Img extends Component {
 			throw new Error("Expected image src instead saw " + typeof src);
 		}
 
-		var img = imgCache[src];
+		var img = undefined;
 
 		if (!img) {
 			img = imgCache[src] = document.createElement("img");

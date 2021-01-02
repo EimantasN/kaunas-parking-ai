@@ -1,4 +1,6 @@
-﻿namespace Domain.Entities
+﻿using System.Collections.Generic;
+
+namespace Domain.Entities
 {
     public class StreamSource : Entity
     {
@@ -11,6 +13,8 @@
         public int Increment { get; set; }
 
         public bool Refresh { get; set; }
+
+        public List<Rect> Selected { get; set; }
 
         public int Next()
         {

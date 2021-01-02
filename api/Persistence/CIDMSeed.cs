@@ -13,11 +13,7 @@ namespace Persistence
             {
                 context.MRCnnSettings.Add(new MRCnnSetting()
                 {
-                    Id = 0,
-                    Source = "",
-                    Created = DateTime.UtcNow,
-                    Updated = DateTime.UtcNow,
-                    Selected = new List<Rect>(),
+                    Sources = new List<StreamSource>(),
                 });
 
                 context.SaveChanges();

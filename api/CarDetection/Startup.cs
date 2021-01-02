@@ -48,7 +48,9 @@ namespace CarDetection
             });
 
             services.AddSingleton<IDetection, DetectionService>();
-            services.AddSingleton<IModelService, ModelService>();
+
+            // Model Controls
+            services.AddSingleton<IModelControls, ModelControls>();
 
             // Register Ml Models
             services.AddSingleton<IMRCnnModel, MRCnnModel>();

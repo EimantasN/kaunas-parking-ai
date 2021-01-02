@@ -5,7 +5,7 @@ import { MRCnnResponse } from '../Api/api';
 import Img from './Img';
 import PredictedRect from './Rects/PredictedRect';
 import SelectedRect from './Rects/SelectedRect';
-import { Slider, Switch } from 'antd';
+import { Slider } from 'antd';
 
 interface IRectsOnImageProps {
   model?: MRCnnResponse,
