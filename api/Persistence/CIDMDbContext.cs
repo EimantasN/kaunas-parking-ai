@@ -17,6 +17,8 @@ namespace Persistence
 
         public DbSet<MRCnnSetting> MRCnnSettings { get; set; }
 
+        public DbSet<StreamSource> Sources { get; set; }
+
         public DbSet<Rect> Rects { get; set; }
     }
 }

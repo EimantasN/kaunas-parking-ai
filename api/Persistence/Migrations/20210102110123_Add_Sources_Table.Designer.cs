@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Persistence;
 
 namespace Persistence.Migrations
 {
     [DbContext(typeof(CIDMDbContext))]
-    partial class CIDMDbContextModelSnapshot : ModelSnapshot
+    [Migration("20210102110123_Add_Sources_Table")]
+    partial class Add_Sources_Table
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -79,7 +81,7 @@ namespace Persistence.Migrations
                     b.Property<int>("Increment")
                         .HasColumnType("int");
 
-                    b.Property<int>("MRCnnSettingId")
+                    b.Property<int?>("MRCnnSettingId")
                         .HasColumnType("int");
 
                     b.Property<int>("Miliseconds")
@@ -109,9 +111,7 @@ namespace Persistence.Migrations
                 {
                     b.HasOne("Domain.Entities.MRCnnSetting", null)
                         .WithMany("Sources")
-                        .HasForeignKey("MRCnnSettingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("MRCnnSettingId");
                 });
 #pragma warning restore 612, 618
         }

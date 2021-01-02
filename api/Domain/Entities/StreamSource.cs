@@ -16,6 +16,8 @@ namespace Domain.Entities
 
         public List<Rect> Selected { get; set; }
 
+        public virtual int MRCnnSettingId { get; set; }
+
         public int Next()
         {
             return Current + Increment;
