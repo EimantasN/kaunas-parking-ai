@@ -37,7 +37,7 @@ namespace CarDetection.HostedServices
             }
             else
             {
-                PathRoot = @"/var/www/KaunasParkingAI/images";
+                PathRoot = @"/var/www/KaunasParkingAI/UI/tmp_clone/kaunas-parking-ai/build";
             }
         }
 
