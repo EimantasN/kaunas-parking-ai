@@ -57,6 +57,7 @@ namespace CarDetection
 
             // Model wathcer
             services.AddHostedService<MRCnnHostedService>();
+            services.AddHostedService<StreamImageLoader>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
