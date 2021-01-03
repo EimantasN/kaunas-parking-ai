@@ -51,7 +51,7 @@ interface IPredictedRectProps {
                 height={this.props.height}
                 text={ this.props.value > this.props.confidence ? this.props.value + '' : "FREE"}
                 color={'green'}
-                fill={'green'}
+                fill={'white'}
                 padding={5}
                 fontFamily={'Calibri'}
                 fontSize={this.calculateTextSize()}

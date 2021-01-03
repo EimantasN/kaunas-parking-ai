@@ -35,7 +35,8 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
   public getSuggestions(response: MRCnnResponse | undefined): any[] {
     const rects: any[] = [];
     response?.rects?.forEach((el) => {
-      rects.push(<SelectedRect 
+      rects.push(<SelectedRect
+        key={`${el.width}${el.height}${el.x}${el.y}`}
         x={(el.x ?? 0) * this.props.scale}
         y={(el.y ?? 0) * this.props.scale}
         width={(el.width ?? 0) * this.props.scale}
@@ -49,7 +50,8 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
     const rects: any[] = [];
     if (response && response.result && response.detected) {
       response.result.forEach((el, index) => {
-        rects.push(<PredictedRect 
+        rects.push(<PredictedRect
+          key={`${el.width}${el.height}${el.x}${el.y}`}
           x={(el.x ?? 0) * this.props.scale}
           y={(el.y ?? 0) * this.props.scale}
           width={(el.width ?? 0) * this.props.scale}

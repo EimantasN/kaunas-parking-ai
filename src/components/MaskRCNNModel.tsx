@@ -1,96 +1,66 @@
 import * as React from 'react';
-import { ModelControlClient, MRCnnClient, MRCnnResponse, StreamSource } from './Api/api';
 import Stats from './Stats';
 import { Radio, Spin } from 'antd';
 import DrawAnnotations from './Draw/DrawAnnotations';
 import RectsOnImage from './Draw/RectsOnImage';
+import MaskRCNNModelState from './Models/MaskRCNNModelState';
+import IMaskRCNNModelState from './Models/Interfaces/IMaskRCNNModelState';
 
 export interface IMaskRCNNModelProps {
 }
 
-export interface IMaskRCNNModelState {
-    model?: MRCnnResponse,
-    count: number,
-    free: number,
-    currentSource: number,
-    unixTime: string,
-    lastUpdate: Date,
-    loading: boolean,
-    scale: number,
-    timer?: NodeJS.Timeout | undefined,
-    getBaseUrl(): string
-}
-
 export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, IMaskRCNNModelState> {
-  public refresh: number = 3;
-  public Client: MRCnnClient = new MRCnnClient();
-  public ControlClient: ModelControlClient = new ModelControlClient();
+  public refresh: number = 2;
+  public timer?: NodeJS.Timeout | undefined;
 
-  private Sources: StreamSource[];
+  private stateObject = new MaskRCNNModelState();
 
   constructor(props: IMaskRCNNModelProps) {
     super(props);
-
-    this.Sources = [];
-    this.state = {
-        count: 10,
-        free: 10,
-        loading: true,
-        currentSource: -1,
-        unixTime: `${Math.round(Date.now() / 1000)}`,
-        lastUpdate: new Date(),
-        scale: 1,
-        getBaseUrl: () => {
-          return `${this.Sources[this.state.currentSource]?.url ?? ''}`;
-        }
-    }
+    this.state = new MaskRCNNModelState()
   }
 
   public async componentDidMount() {
-    this.Sources = await this.ControlClient.sources();
-    await this.update();
-    this.setState({timer: setInterval(async () => {
-        await this.update();
-    }, this.refresh * 1000)});
+    this.setState({...await this.stateObject.load()});
+    this.setState({...await this.stateObject.update()});
+    this.timer = setInterval(async () => {
+      this.setState({...await this.stateObject.update()});
+    }, this.refresh * 1000);
+  }
+
+  public componentWillUnmount() {
+    this.timer = undefined;
   }
 
   public onChange = async (e: any) => {
-    const source = this.Sources[e.target.value];
-    if (source && source.id) {
-      await this.ControlClient.active(source.id);
-      this.setState({
-        currentSource: e.target.value,
-        loading: true,
-      });
-    }
+   this.setState({...await this.stateObject.active(e.target.value)});
   };
 
   private getOptions(): typeof Radio[] {
     const arr: any[] = [];
-    for (var i = 0; i < this.Sources.length; i++) {
-      arr.push(<Radio key={i} value={i}>{i}</Radio>);
+    for (var i = 0; i < this.stateObject.Sources.length; i++) {
+      arr.push(<Radio key={i} value={this.stateObject.Sources[i].id}>{i}</Radio>);
     }
-
     return arr;
   }
 
   public render() {
-    const prediction = this.Sources[this.state.currentSource]?.id && !this.state.loading
+    const prediction = this.stateObject.show()
       ? <RectsOnImage 
           model={this.state.model}
           scale={this.state.scale}
           lastUpdate={this.state.lastUpdate}
-          url={this.Sources[this.state.currentSource]?.url + this.state.unixTime ?? ''}
+          url={this.stateObject.getImageUrl()}
         />
-      : null;
-    const selection = this.Sources[this.state.currentSource]?.id && !this.state.loading
+      : <h2>Model Unavailable</h2>;
+    const selection = this.stateObject.show()
       ? <DrawAnnotations 
-          url={this.Sources[this.state.currentSource]?.url + this.state.unixTime ?? ''}
+          url={this.stateObject.getImageUrl()}
           scale={this.state.scale}
           lastUpdate={this.state.lastUpdate}
           width={this.state.model?.width ?? 0}
           height={this.state.model?.height ?? 0}
-          sourceId={this.Sources[this.state.currentSource]?.id ?? 0}
+          sourceId={this.state.currentSource}
         />
       : null;
     const loading = this.state.loading 
@@ -103,6 +73,13 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
             free={this.state?.free ?? 0}
             lastUpdate={this.state?.lastUpdate ?? new Date()}
         />
+        <div className="playerContainer">
+          <div className="player">
+            <p>Time {this.state.model?.miliseconds + ' ms '} 
+              / Active {this.state.model?.working + ' '}
+              / Available {this.state.model?.online + ''}</p>
+          </div>
+        </div>
         <div className="playerContainer">
           <div className="player">
             <Radio.Group 
@@ -124,54 +101,5 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
         </div>
       </div>
     );
-  }
-
-  private getScale(model?: MRCnnResponse): number {
-    if (model 
-        && model?.width 
-        && model?.height) {
-        const byWidth = (100 * 800) / model.width;
-        return byWidth / 100;
-    } else {
-      return 1;
-    }
-  }
-
-  public async update() {
-    const response = await this.Client.predict();
-    const currentSource = this.state.currentSource === -1 
-      ? this.Sources.findIndex(x => x.active === true)
-      : this.state.currentSource;
-
-    if (response.sourceId !== this.Sources[currentSource]?.id) {
-      return;
-    }
-    this.setState({
-        model: response,
-        currentSource: currentSource,
-        loading: this.isLoading(),
-        unixTime: `${Math.round(Date.now() / 1000)}`,
-        lastUpdate: new Date(),
-        count: response.total ?? 0,
-        free: response.free ?? 0,
-        scale: this.getScale(response)
-    });
-  }
-
-  private isLoading(): boolean {
-    if (!this.state.model) {
-      return true;
-    }
-    if (!this.state.model.sourceId) {
-      return true;
-    }
-    const sourceIndex = this.Sources.findIndex(x => x.id === this.state?.model?.sourceId);
-    if (sourceIndex < 0) {
-      return true;
-    }
-    if (this.state.model.sourceId !== this.Sources[this.state.currentSource].id) {
-      return true;
-    }
-    return false;
   }
 }

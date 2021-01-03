@@ -4,6 +4,6 @@ namespace CarDetection.Interfaces
 {
     public interface IMRCnnModel : IModel
     {
-        MRCnnResponse LastPrediction { get; }
+        MRCnnResponse GetLastPrediction(int source);
     }
 }

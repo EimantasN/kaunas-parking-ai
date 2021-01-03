@@ -88,9 +88,10 @@ namespace CarDetection.Services
 
             this.context.Rects.RemoveRange(current.Selected);
 
-            selected.ForEach(x => { x.Id = 0; });
+            var result = SelectedRects[source].ToList();
+            result.ForEach(x => { x.Id = 0; });
 
-            current.Selected = selected;
+            current.Selected = result;
 
             await this.context.SaveChangesAsync();
             return true;

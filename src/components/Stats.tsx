@@ -17,13 +17,13 @@ export default class Stats extends React.Component<IStatsProps, IStatsState> {
                 <Row justify="center">
                     <Col span={12} >
                         <div className="countItem">
-                            <p className="countTotal">Mašinų skaičius</p>
+                            <p className="countTotal">Total</p>
                             <p className="countFree">{this.props.count}</p>
                         </div>
                     </Col>
                     <Col span={12}>                         
                         <div className="countItem">
-                            <p className="countTotal">Laisvos vietos</p>
+                            <p className="countTotal">Free</p>
                             <p className="countFree">{this.props.free}</p>
                         </div>
                     </Col>

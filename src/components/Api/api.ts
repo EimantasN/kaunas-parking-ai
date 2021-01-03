@@ -233,8 +233,12 @@ export class MRCnnClient {
         this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "https://detection.endev.lt";
     }
 
-    predict(): Promise<MRCnnResponse> {
-        let url_ = this.baseUrl + "/Predict";
+    predict(source: number | undefined): Promise<MRCnnResponse> {
+        let url_ = this.baseUrl + "/Predict/source?";
+        if (source === null)
+            throw new Error("The parameter 'source' cannot be null.");
+        else if (source !== undefined)
+            url_ += "source=" + encodeURIComponent("" + source) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ = <RequestInit>{
@@ -556,6 +560,8 @@ export class MRCnnResponse implements IMRCnnResponse {
     online?: boolean;
     sourceId?: number;
     miliseconds?: number;
+    working?: boolean;
+    updated?: Date;
     rects?: DrawRects[];
     detected?: number[];
     result?: DrawRects[];
@@ -578,6 +584,8 @@ export class MRCnnResponse implements IMRCnnResponse {
             this.online = _data["online"];
             this.sourceId = _data["sourceId"];
             this.miliseconds = _data["miliseconds"];
+            this.working = _data["working"];
+            this.updated = _data["updated"] ? new Date(_data["updated"].toString()) : <any>undefined;
             if (Array.isArray(_data["rects"])) {
                 this.rects = [] as any;
                 for (let item of _data["rects"])
@@ -612,6 +620,8 @@ export class MRCnnResponse implements IMRCnnResponse {
         data["online"] = this.online;
         data["sourceId"] = this.sourceId;
         data["miliseconds"] = this.miliseconds;
+        data["working"] = this.working;
+        data["updated"] = this.updated ? this.updated.toISOString() : <any>undefined;
         if (Array.isArray(this.rects)) {
             data["rects"] = [];
             for (let item of this.rects)
@@ -639,6 +649,8 @@ export interface IMRCnnResponse {
     online?: boolean;
     sourceId?: number;
     miliseconds?: number;
+    working?: boolean;
+    updated?: Date;
     rects?: DrawRects[];
     detected?: number[];
     result?: DrawRects[];

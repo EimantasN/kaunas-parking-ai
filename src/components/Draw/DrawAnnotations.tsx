@@ -168,9 +168,9 @@ export default class DrawAnnotations extends Component<IDrawAnnotationsProps, ID
 
   private async loadSelections() {
     if (this.state.lastSourceId !== this.props.sourceId) {
-      const { annotations, data } = this.state;
 
-      annotations.length = 0;
+      const data:Annotation[] = [];
+      const annotations: Annotation[] = [];
       (await this.Client.allSelected(this.props.sourceId)).forEach((el) => {
         const model = {
           key: DrawAnnotations.getIndex(),

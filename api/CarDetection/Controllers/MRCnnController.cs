@@ -15,11 +15,11 @@ namespace CarDetection.Controllers
             this.mrcnn = mrcnn;
         }
 
-        [HttpGet("/Predict")]
+        [HttpGet("/Predict/source")]
 
-        public ActionResult<MRCnnResponse> Predict()
+        public ActionResult<MRCnnResponse> Predict(int source)
         {
-            return mrcnn.LastPrediction;
+            return mrcnn.GetLastPrediction(source);
         }
     }
 }

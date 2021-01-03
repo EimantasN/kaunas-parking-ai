@@ -1,11 +1,8 @@
-﻿using CarDetection.Generics;
-using CarDetection.Interfaces;
+﻿using CarDetection.Interfaces;
 using CarDetection.Models;
 using Domain.Entities;
 using Domain.Exeptions;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using Persistence;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -19,118 +16,111 @@ namespace CarDetection.MLModels
 {
     public class MRCnnModel : IMRCnnModel
     {
-        private readonly string BaseUrl = "http://212.117.25.59:5000/predict";
+        private readonly string BaseUrl = "http://192.168.0.107:5000/predict";
 
         private const int SleepWhenOffline = 30000;
 
         private readonly IHttpClientFactory httpClientFactory;
         private readonly IModelControls controls;
 
-        private readonly LimitedSize<ModelResponse> Predictions;
-
-        private int MaxCount { get; set; }
-
-        private int CurrentCount { get; set; }
-
-        public bool Working { get; set; }
-
-        private readonly object _lock;
-
-        public MRCnnResponse LastPrediction { get; set; }
+        public Dictionary<int, MRCnnResponse> LastPredictions { get; set; }
 
         private Stopwatch Timer { get; set; }
 
         public MRCnnModel(IHttpClientFactory httpClientFactory, IModelControls controls)
         {
-            _lock = new object();
             Timer = new Stopwatch();
             this.httpClientFactory = httpClientFactory;
             this.controls = controls;
-            LastPrediction = new MRCnnResponse();
-            Predictions = new LimitedSize<ModelResponse>(10);
+            LastPredictions = new Dictionary<int, MRCnnResponse>();
+        }
+
+        public MRCnnResponse GetLastPrediction(int source)
+        {
+            if (LastPredictions.ContainsKey(source))
+            {
+                return LastPredictions[source];
+            }
+            return LastPredictions[source] = new MRCnnResponse();
         }
 
         public async Task Predict()
         {
-            lock (_lock)
+            foreach (var source in await controls.GetSources())
             {
-                if (Working)
-                    return;
-                Working = true;
+                await PredictBySource(GetLastPrediction(source.Id), source);
             }
+        }
 
+        private async Task PredictBySource(MRCnnResponse lastPrediction, StreamSource streamSource)
+        {
             try
             {
+                lastPrediction.Working = true;
+
                 Timer.Restart();
-                List<Rect> positions = await controls.ActiveAllSelected();
-                var currentSourceId = controls.Source.Id;
-                var activeUrl = controls.Source.Url;
+                List<Rect> positions = await controls.AllSelected(streamSource.Id);
+                var currentSourceId = streamSource.Id;
+                var activeUrl = streamSource.Url;
 
                 if (positions.Count == 0)
                 {
-                    LastPrediction.Free = 0;
-                    LastPrediction.Total = 0;
-                    LastPrediction.Rects = new List<DrawRects>();
+                    lastPrediction.Free = 0;
+                    lastPrediction.Total = 0;
+                    lastPrediction.Rects = new List<DrawRects>();
                     return;
                 }
-                var model = await SendRequest(positions, activeUrl);
+                var model = await SendRequest(lastPrediction, positions, activeUrl);
 
                 var carDetections = model.Data
                     .Where(x => x[1] == "car")
                     .ToList();
 
                 // Save to history
-                Predictions.Add(model);
+                lastPrediction.AddPrediction(model);
 
-                LastPrediction.Result = positions
+                lastPrediction.Result = positions
                     .Select(x => new DrawRects(x.x1, x.y1, x.x2, x.y2))
                     .ToList();
 
-                LastPrediction.Detected = model.Detected;
-
-                // Total count
-                CurrentCount = carDetections.Count;
-                if (CurrentCount > MaxCount)
-                    MaxCount = CurrentCount;
+                lastPrediction.Detected = model.Detected;
 
                 // Format newest data
-
-                LastPrediction.Total = positions.Count;
-                LastPrediction.Free = model.Detected
+                lastPrediction.Total = positions.Count;
+                lastPrediction.Free = model.Detected
                     .Where(x => x < 0.4)
                     .Count();
 
-                LastPrediction.Width = model.Width;
-                LastPrediction.Height = model.Height;
-                LastPrediction.SourceId = currentSourceId;
-                LastPrediction.Miliseconds = (int)Timer.ElapsedMilliseconds;
-                LastPrediction.ParseRects(model.Rects);
+                lastPrediction.Width = model.Width;
+                lastPrediction.Height = model.Height;
+                lastPrediction.SourceId = currentSourceId;
+                lastPrediction.Miliseconds = (int)Timer.ElapsedMilliseconds;
+                lastPrediction.Online = true;
+                lastPrediction.ParseRects(model.Rects);
             }
-            catch (Exception) 
+            catch (Exception)
             {
-                LastPrediction.Online = false;
-                await Task.Delay(SleepWhenOffline);
+                lastPrediction.Online = false;
             }
             finally
             {
-                Working = false;
+                lastPrediction.Working = false;
             }
         }
 
-        public async Task<ModelResponse> SendRequest(List<Rect> positions, string activeUrl)
+        public async Task<ModelResponse> SendRequest(MRCnnResponse lastPrediction, List<Rect> positions, string activeUrl)
         {
             var client = httpClientFactory.CreateClient();
             var url = BuildUrl(positions, activeUrl);
             var response = await client.GetAsync(url);
             if (!response.IsSuccessStatusCode)
             {
-                LastPrediction.Online = false;
-                await Task.Delay(SleepWhenOffline);
+                lastPrediction.Online = false;
                 throw new ModelUnreachable();
             }
             else
             {
-                LastPrediction.Online = true;
+                lastPrediction.Online = true;
             }
             var content = await response.Content.ReadAsStringAsync();
             try
