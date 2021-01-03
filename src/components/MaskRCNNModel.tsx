@@ -10,7 +10,7 @@ export interface IMaskRCNNModelProps {
 }
 
 export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, IMaskRCNNModelState> {
-  public refresh: number = 2;
+  public refresh: number = 0.5;
   public timer?: NodeJS.Timeout | undefined;
 
   private stateObject = new MaskRCNNModelState();

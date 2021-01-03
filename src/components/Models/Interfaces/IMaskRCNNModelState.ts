@@ -16,6 +16,5 @@ export default interface IMaskRCNNModelState {
     active(sourceId: number): Promise<MaskRCNNModelState>,
     offline(): boolean,
     show(): boolean,
-    getImageUrl(): string,
-    getBaseUrl(): string
+    getImageUrl(): string
 }

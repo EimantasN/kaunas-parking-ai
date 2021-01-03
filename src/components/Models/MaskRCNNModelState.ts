@@ -30,6 +30,7 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
 
     public async active(sourceId: number): Promise<MaskRCNNModelState> {
         await this.ControlClient.active(sourceId);
+        await this.update();
         this.currentSource = sourceId;
         this.loading = true;
 
@@ -62,10 +63,6 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
         this.scale = this.getScale();
 
         return this;
-    }
-    
-    public getBaseUrl(): string {
-        return `${this.Sources[this.currentSource]?.url ?? ''}`;
     }
 
     private isLoading(): boolean {
@@ -102,7 +99,7 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
     public getImageUrl(): string {
         const source = this.Sources.find((s) => s.id === this.currentSource);
         if (source) {
-          return `${source.url}${this.unixTime}`;
+          return `http://p170m109.endev.lt/${this.currentSource}.png?unix=${this.unixTime}`;
         }
         return '';
     }
