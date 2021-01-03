@@ -14,9 +14,10 @@ namespace CarDetection
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public Startup(IConfiguration configuration, IHostEnvironment host)
         {
             Configuration = configuration;
+            Enviroment.Setup(host);
         }
 
         public IConfiguration Configuration { get; }

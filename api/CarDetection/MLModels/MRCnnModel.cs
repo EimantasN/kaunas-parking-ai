@@ -60,7 +60,7 @@ namespace CarDetection.MLModels
                 Timer.Restart();
                 List<Rect> positions = await controls.AllSelected(streamSource.Id);
                 var currentSourceId = streamSource.Id;
-                var activeUrl = streamSource.Url;
+                var activeUrl = Enviroment.SourceImageRemote(streamSource);
 
                 if (positions.Count == 0)
                 {
@@ -97,7 +97,7 @@ namespace CarDetection.MLModels
                 lastPrediction.Online = true;
                 lastPrediction.ParseRects(model.Rects);
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 lastPrediction.Online = false;
             }
