@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Stats from './Stats';
-import { Radio, Spin } from 'antd';
+import { Radio, Spin, Slider } from 'antd';
 import DrawAnnotations from './Draw/DrawAnnotations';
 import RectsOnImage from './Draw/RectsOnImage';
 import MaskRCNNModelState from './Models/MaskRCNNModelState';
@@ -12,7 +12,8 @@ export interface IMaskRCNNModelProps {
 export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, IMaskRCNNModelState> {
   public refresh: number = 0.5;
   public timer?: NodeJS.Timeout | undefined;
-
+  public active: boolean = true;
+  
   private stateObject = new MaskRCNNModelState();
 
   constructor(props: IMaskRCNNModelProps) {
@@ -24,16 +25,20 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
     this.setState({...await this.stateObject.load()});
     this.setState({...await this.stateObject.update()});
     this.timer = setInterval(async () => {
-      this.setState({...await this.stateObject.update()});
+      if (this.active) {
+        this.setState({...await this.stateObject.update()});
+      }
     }, this.refresh * 1000);
   }
 
   public componentWillUnmount() {
+    this.active = false;
     this.timer = undefined;
   }
 
   public onChange = async (e: any) => {
-   this.setState({...await this.stateObject.active(e.target.value)});
+    this.setState({loading: true});
+    this.setState({...await this.stateObject.active(e.target.value)});
   };
 
   private getOptions(): typeof Radio[] {
@@ -50,6 +55,7 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
           model={this.state.model}
           scale={this.state.scale}
           lastUpdate={this.state.lastUpdate}
+          confidence={this.state.confidence}
           url={this.stateObject.getImageUrl()}
         />
       : <h2>Model Unavailable</h2>;
@@ -89,11 +95,19 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
             </Radio.Group>
           </div>
         </div>
+        <p></p>
         <br></br>
         <div className="playerContainer">
           <div className="player" style={{
             paddingBottom: '50px'
           }}>
+            <p>Confidence level</p>
+            <Slider defaultValue={this.state.confidence} 
+            onChange={async (value: number) => {
+                this.setState({...await this.stateObject.setConf(value)});
+              }
+            } />
+          <p></p>
             {prediction}
             {selection}
             {loading}

@@ -38,7 +38,6 @@ interface ISelectedRectProps {
           strokeWidth={this.state.selected ? 2 : 0.2}
           shadowBlur={2}
           onClick={this.handleClick}
-          onDblClick={() => { console.log('remove')}}
         />
       );
     }

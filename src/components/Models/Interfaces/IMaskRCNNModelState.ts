@@ -10,11 +10,13 @@ export default interface IMaskRCNNModelState {
     lastUpdate: Date,
     loading: boolean,
     scale: number,
+    confidence: number,
     Sources: StreamSource[],
     load(): Promise<MaskRCNNModelState>,
     update(): Promise<MaskRCNNModelState>,
     active(sourceId: number): Promise<MaskRCNNModelState>,
     offline(): boolean,
     show(): boolean,
+    setConf(value: number): Promise<MaskRCNNModelState>,
     getImageUrl(): string
 }

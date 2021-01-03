@@ -11,6 +11,7 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
     public loading: boolean;
     public scale: number;
     public Sources: StreamSource[] = [];
+    public confidence: number;
 
     private ControlClient: ModelControlClient = new ModelControlClient();
     private Client: MRCnnClient = new MRCnnClient();
@@ -26,6 +27,12 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
         this.lastUpdate = new Date();
         this.loading = true;
         this.scale = 1;
+        this.confidence = 50;
+    }
+
+    public async setConf(value: number): Promise<MaskRCNNModelState> {
+      this.confidence = value;
+      return this;
     }
 
     public async active(sourceId: number): Promise<MaskRCNNModelState> {
@@ -58,8 +65,22 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
         this.unixTime = `${Math.round(Date.now() / 1000)}`;
         this.lastUpdate = new Date();
 
-        this.count = response.total ?? 0;
-        this.free = response.free ?? 0;
+        if (response.total) {
+          this.count = (response.total);
+        } else {
+          this.count = 0;
+        }
+
+        this.free = 0;
+        if (this.model?.detected) {
+          this.free = this.count - this.model.detected.filter((r) => {
+            if (r > (this.confidence / 100)) {
+              return true;
+            }
+            return false;
+          }).length;
+        }
+
         this.scale = this.getScale();
 
         return this;
@@ -74,9 +95,6 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
         }
         const sourceIndex = this.Sources.findIndex(x => x.id === this.model?.sourceId);
         if (sourceIndex < 0) {
-          console.log(this.model);
-          console.log(this.Sources);
-    
           return true;
         }
         if (this.model.sourceId !== this.currentSource) {

@@ -1,23 +1,24 @@
 import { Button } from 'antd';
 import React, { Component } from 'react';
-import { Stage, Layer } from 'react-konva';
+import { Stage, Layer, Text } from 'react-konva';
 import { MRCnnResponse } from '../Api/api';
 import Img from './Img';
 import PredictedRect from './Rects/PredictedRect';
 import SelectedRect from './Rects/SelectedRect';
-import { Slider } from 'antd';
 
 interface IRectsOnImageProps {
   model?: MRCnnResponse,
   url: string,
   scale: number,
+  confidence: number,
   lastUpdate: Date
 }
 
 interface IRectsOnImageState {
   suggestions: boolean,
   predictions: boolean,
-  confidence: number
+  activeKey: string,
+  currentValue: string | null
 }
 
 export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOnImageState> {
@@ -28,7 +29,8 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
     this.state = {
       suggestions: false,
       predictions: true,
-      confidence: 50
+      activeKey: '',
+      currentValue: null
     }
   }
 
@@ -50,14 +52,23 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
     const rects: any[] = [];
     if (response && response.result && response.detected) {
       response.result.forEach((el, index) => {
+        const key = `${el.width}${el.height}${el.x}${el.y}`;
         rects.push(<PredictedRect
-          key={`${el.width}${el.height}${el.x}${el.y}`}
+          key={key}
+          activeKey={key}
           x={(el.x ?? 0) * this.props.scale}
           y={(el.y ?? 0) * this.props.scale}
           width={(el.width ?? 0) * this.props.scale}
           height={(el.height ?? 0) * this.props.scale}
-          value={response.detected ? response.detected[index] : 0}
-          confidence={this.state.confidence / 100}
+          value={response.detected !== undefined ? response.detected[index] : 0}
+          confidence={this.props.confidence / 100}
+          active={key === this.state.activeKey}
+          displayText={(key, text) => {
+            this.setState({
+              activeKey: key,
+              currentValue: text
+            });
+          }}
         />);
       });
     }
@@ -71,9 +82,6 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
     return (
       <>
       <div>
-        <p>Confidence level</p>
-        <Slider defaultValue={this.state.confidence} onChange={(value: number) => this.setState({confidence: value })} />
-        <p></p>
         <Button type="dashed" onClick={() => {
           this.setState({suggestions: !this.state.suggestions});
         }}>Show Suggestions</Button>
@@ -92,6 +100,18 @@ export default class RectsOnImage extends Component<IRectsOnImageProps, IRectsOn
             lastUpdate={this.props.lastUpdate}/>
           {predictions ? this.getWatched(this.props.model) : null}
           {suggestions ? this.getSuggestions(this.props.model) : null}
+          <Text 
+            width={250}
+            height={25}
+            text={this.state.activeKey ? this.state.currentValue ?? '' : ''}
+            color={'green'}
+            fill={'red'}
+            padding={5}
+            fontFamily={'Calibri'}
+            fontSize={18}
+            align={'left'}
+            verticalAlign={'center'}
+          />
         </Layer>
       </Stage>
       <p></p>
