@@ -436,6 +436,7 @@ export interface IEntity {
 
 export class StreamSource extends Entity implements IStreamSource {
     url?: string | undefined;
+    title?: string | undefined;
     miliseconds?: number;
     current?: number;
     increment?: number;
@@ -452,6 +453,7 @@ export class StreamSource extends Entity implements IStreamSource {
         super.init(_data);
         if (_data) {
             this.url = _data["url"];
+            this.title = _data["title"];
             this.miliseconds = _data["miliseconds"];
             this.current = _data["current"];
             this.increment = _data["increment"];
@@ -476,6 +478,7 @@ export class StreamSource extends Entity implements IStreamSource {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["url"] = this.url;
+        data["title"] = this.title;
         data["miliseconds"] = this.miliseconds;
         data["current"] = this.current;
         data["increment"] = this.increment;
@@ -494,6 +497,7 @@ export class StreamSource extends Entity implements IStreamSource {
 
 export interface IStreamSource extends IEntity {
     url?: string | undefined;
+    title?: string | undefined;
     miliseconds?: number;
     current?: number;
     increment?: number;

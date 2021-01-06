@@ -29,20 +29,19 @@ export default class Navigation extends React.Component<INavigatioProps, INaviga
     const { current } = this.state;
     return (
         <Menu onClick={this.handleClick} selectedKeys={[current]} mode="horizontal">
-          <SubMenu key="SubMenu" icon={<SettingOutlined />} title="Model">
-            <Menu.Item key="mrcnn">
-                <Link to="/">
-                    Mask RCNN
-                </Link>
-            </Menu.Item>
-          </SubMenu>
-          <SubMenu key="Literature" icon={<SettingOutlined />} title="References">
-            <Menu.Item key="leterature:1">
-                <a href="https://ant.design" target="_blank" rel="noopener noreferrer">
-                    MRCNN
-                </a>
-            </Menu.Item>
-          </SubMenu>
+          <Menu.Item 
+            key="mrcnn">
+            <Link to="/">
+                Mask RCNN
+            </Link>
+          </Menu.Item>
+          <Menu.Item 
+            disabled={true} 
+            key="yolo">
+              <Link to="/yolo">
+                  YOLO
+              </Link>
+          </Menu.Item>
         </Menu>
       );
     }

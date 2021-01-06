@@ -26,6 +26,8 @@ namespace CarDetection.MLModels
 
         private Stopwatch Timer { get; set; }
 
+        private List<StreamSource> Sources { get; set; }
+
         public MRCnnModel(IHttpClientFactory httpClientFactory, IModelControls controls)
         {
             Timer = new Stopwatch();
@@ -45,7 +47,12 @@ namespace CarDetection.MLModels
 
         public async Task Predict()
         {
-            foreach (var source in await controls.GetSources())
+            if (Sources == null)
+            {
+                Sources = await controls.GetSources();
+            }
+
+            foreach (var source in Sources)
             {
                 await PredictBySource(GetLastPrediction(source.Id), source);
             }

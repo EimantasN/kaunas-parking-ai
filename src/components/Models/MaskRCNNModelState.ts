@@ -36,8 +36,8 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
     }
 
     public async active(sourceId: number): Promise<MaskRCNNModelState> {
-        await this.ControlClient.active(sourceId);
-        await this.update();
+        //await this.ControlClient.active(sourceId);
+        //await this.update();
         this.currentSource = sourceId;
         this.loading = true;
 
@@ -50,6 +50,8 @@ export default class MaskRCNNModelState implements IMaskRCNNModelState {
         this.currentSource = this.Sources.filter((s) => s.active)[0].id ?? 1;
 
         this.Loaded = true;
+        
+        await this.update()
 
         return this;
     }

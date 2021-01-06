@@ -6,6 +6,8 @@ namespace Domain.Entities
     {
         public string Url { get; set; }
 
+        public string Title { get; set; }
+
         public int Miliseconds { get; set; }
 
         public int Current { get; set; }

@@ -23,7 +23,6 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
 
   public async componentDidMount() {
     this.setState({...await this.stateObject.load()});
-    this.setState({...await this.stateObject.update()});
     this.timer = setInterval(async () => {
       if (this.active) {
         this.setState({...await this.stateObject.update()});
@@ -37,8 +36,9 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
   }
 
   public onChange = async (e: any) => {
-    this.setState({loading: true});
-    this.setState({...await this.stateObject.active(e.target.value)});
+    this.setState({
+      ...await this.stateObject.active(e.target.value)
+    });
   };
 
   private getOptions(): typeof Radio[] {
@@ -47,6 +47,12 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
       arr.push(<Radio key={i} value={this.stateObject.Sources[i].id}>{i}</Radio>);
     }
     return arr;
+  }
+
+  private GetTitles(): string {
+    return this.stateObject.Sources
+      .find(x => x.id === this.state.currentSource)?.title ?? 
+      'Empty';
   }
 
   public render() {
@@ -84,6 +90,11 @@ export default class MaskRCNNModel extends React.Component<IMaskRCNNModelProps, 
             <p>Time {this.state.model?.miliseconds + ' ms '} 
               / Active {this.state.model?.working + ' '}
               / Available {this.state.model?.online + ''}</p>
+          </div>
+        </div>
+        <div className="playerContainer">
+          <div className="player">
+            <h2>{this.GetTitles()}</h2>
           </div>
         </div>
         <div className="playerContainer">
